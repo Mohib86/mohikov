@@ -1,0 +1,1777 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Tarkov Quest Tracker</title>
+<style>
+  :root {
+    --bg: #14161a;
+    --panel: #1d2025;
+    --panel2: #232730;
+    --border: #2c3038;
+    --text: #e6e6e6;
+    --muted: #8a8f98;
+    --accent: #c79b3b;
+    --green: #4caf50;
+    --red: #e05757;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Segoe UI", Arial, sans-serif;
+  }
+  header {
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 20px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  header h1 {
+    margin: 0 0 4px 0;
+    font-size: 28px;
+    color: var(--accent);
+    text-align: center;
+  }
+  #tarkovGameTime {
+    text-align: center;
+    color: var(--muted);
+    font-size: 14px;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: center;
+    gap: 22px;
+  }
+  #tarkovGameTime > span { display: inline-flex; align-items: center; gap: 4px; }
+  #tarkovGameTimeDay, #tarkovGameTimeNight {
+    color: var(--text);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+  }
+  .controls input, .controls select, .controls button {
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 6px 10px;
+    font-size: 13px;
+    transition: border-color .15s, transform .1s;
+  }
+  .controls button { cursor: pointer; }
+  .controls button:hover { border-color: var(--accent); }
+  .controls button:active { transform: scale(0.96); }
+  .controls button.active {
+    background: var(--accent);
+    color: #14161a;
+    border-color: var(--accent);
+  }
+  #progress {
+    margin-left: auto;
+    color: var(--muted);
+    font-size: 13px;
+    white-space: nowrap;
+  }
+  #progressBarOuter {
+    width: 140px;
+    height: 8px;
+    background: var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+    display: inline-block;
+    margin-left: 8px;
+    vertical-align: middle;
+  }
+  #progressBarInner {
+    height: 100%;
+    background: var(--accent);
+    width: 0%;
+    transition: width .3s ease;
+  }
+  main {
+    padding: 16px 20px 60px;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+  .trader-group {
+    margin-bottom: 16px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .trader-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 14px;
+    background: var(--panel2);
+    cursor: pointer;
+    user-select: none;
+  }
+  .trader-header:hover { background: #282d38; }
+  .trader-avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid var(--border);
+    flex: 0 0 auto;
+    background: var(--bg);
+  }
+  .trader-header h2 {
+    margin: 0;
+    font-size: 15px;
+    color: var(--accent);
+    flex: 0 0 auto;
+  }
+  .trader-mini-bar {
+    flex: 1;
+    height: 6px;
+    background: var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .trader-mini-bar-inner {
+    height: 100%;
+    background: var(--green);
+    transition: width .3s ease;
+  }
+  .trader-count {
+    font-size: 12px;
+    color: var(--muted);
+    flex: 0 0 auto;
+  }
+  .trader-caret {
+    transition: transform .2s ease;
+    color: var(--muted);
+    flex: 0 0 auto;
+  }
+  .trader-group.collapsed .trader-caret { transform: rotate(-90deg); }
+
+  /* Smooth collapse without JS height measurement */
+  .trader-collapse {
+    display: grid;
+    grid-template-rows: 1fr;
+    transition: grid-template-rows .25s ease;
+  }
+  .trader-group.collapsed .trader-collapse { grid-template-rows: 0fr; }
+  .collapse-inner { overflow: hidden; min-height: 0; }
+
+  .trader-quests {
+    padding: 10px;
+    display: grid;
+    grid-auto-flow: column;
+    grid-template-rows: repeat(5, 1fr);
+    grid-auto-columns: 250px;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 14px;
+    scrollbar-color: var(--accent) var(--bg);
+  }
+  .trader-quests::-webkit-scrollbar { height: 8px; }
+  .trader-quests::-webkit-scrollbar-track { background: var(--bg); }
+  .trader-quests::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+  .trader-quests::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+  .quest-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 10px;
+    width: 250px;
+    height: 92px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    cursor: pointer;
+    transition: border-color .15s, opacity .15s, transform .1s;
+  }
+  .quest-card:hover { border-color: var(--accent); transform: translateY(-1px); }
+  .quest-card.completed { opacity: 0.5; }
+  .quest-card.locked { border-left: 3px solid var(--red); }
+  .quest-card.available { border-left: 3px solid var(--green); }
+
+  .quest-card-top {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .quest-card-top input[type=checkbox] {
+    margin-top: 2px;
+    width: 15px;
+    height: 15px;
+    cursor: pointer;
+    flex: 0 0 auto;
+  }
+  .quest-card-title {
+    font-weight: 600;
+    font-size: 12.5px;
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .quest-card-title .kappa { color: var(--accent); font-size: 11px; }
+
+  .badges {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+    overflow: hidden;
+    max-height: 20px;
+  }
+  .badge {
+    font-size: 10.5px;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 1px 5px;
+    white-space: nowrap;
+  }
+  .badge.status-locked { color: var(--red); border-color: var(--red); }
+  .badge.status-available { color: var(--green); border-color: var(--green); }
+
+  /* Modal */
+  #modalOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+  }
+  #modalOverlay.show { display: flex; }
+  #modalBox {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    max-width: 560px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+    padding: 20px 24px;
+    position: relative;
+  }
+  #modalClose {
+    position: absolute;
+    top: 10px;
+    right: 14px;
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-size: 20px;
+    cursor: pointer;
+  }
+  #modalClose:hover { color: var(--text); }
+  #modalBox h3 {
+    margin: 0 0 4px 0;
+    color: var(--accent);
+    font-size: 18px;
+    padding-right: 20px;
+  }
+  #modalBox .badges { margin-bottom: 14px; max-height: none; }
+  #modalBox ul { margin: 4px 0 14px 18px; padding: 0; font-size: 13px; }
+  #modalBox li { margin-bottom: 4px; }
+  #modalBox strong { color: var(--text); font-size: 13px; }
+  .obj-loc {
+    font-size: 10.5px;
+    color: var(--accent);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 0 5px;
+    margin-left: 6px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .obj-loc:hover { background: var(--accent); color: #14161a; }
+  .prereq-met { color: var(--green); }
+  .prereq-unmet { color: var(--red); }
+  .modal-complete-btn {
+    background: var(--accent);
+    color: #14161a;
+    border: none;
+    border-radius: 4px;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  #status {
+    color: var(--muted);
+    text-align: center;
+    padding: 40px;
+  }
+  .spinner {
+    width: 28px; height: 28px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    margin: 0 auto 10px;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  footer {
+    text-align: center;
+    color: var(--muted);
+    font-size: 11px;
+    padding: 10px;
+  }
+  a { color: var(--accent); }
+  #toast {
+    position: fixed;
+    bottom: 18px;
+    right: 18px;
+    background: var(--panel2);
+    border: 1px solid var(--accent);
+    color: var(--text);
+    padding: 10px 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity .25s, transform .25s;
+    pointer-events: none;
+    z-index: 100;
+  }
+  #toast.show { opacity: 1; transform: translateY(0); }
+  mark { background: var(--accent); color: #14161a; border-radius: 2px; }
+
+  .top-tabs {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .top-tabs button {
+    background: var(--bg);
+    color: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 7px 16px;
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .top-tabs button:hover { border-color: var(--accent); color: var(--text); }
+  .top-tabs button.active {
+    background: var(--accent);
+    color: #14161a;
+    border-color: var(--accent);
+  }
+
+  .map-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 14px 20px 0;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+  .map-tabs button {
+    background: var(--panel);
+    color: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 6px 12px;
+    font-size: 12.5px;
+    cursor: pointer;
+  }
+  .map-tabs button:hover { border-color: var(--accent); }
+  .map-tabs button.active {
+    background: var(--accent);
+    color: #14161a;
+    border-color: var(--accent);
+  }
+
+  #lootMapsView { max-width: 1400px; margin: 0 auto; padding: 16px 20px 60px; }
+  .ref-status { color: var(--muted); text-align: center; padding: 40px; }
+  .ref-page { max-width: 1400px; margin: 0 auto; padding: 16px 20px 60px; }
+  .ref-group { margin-bottom: 16px; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  .ref-group-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 14px;
+    background: var(--panel2);
+    cursor: pointer;
+    user-select: none;
+  }
+  .ref-group-header:hover { background: #282d38; }
+  .ref-group-header h2 { margin: 0; font-size: 15px; color: var(--accent); flex: 1; }
+  .ref-group-header .trader-caret { color: var(--muted); }
+  .ref-group.collapsed .ref-caret { transform: rotate(-90deg); }
+  .ref-collapse { display: grid; grid-template-rows: 1fr; transition: grid-template-rows .25s ease; }
+  .ref-group.collapsed .ref-collapse { grid-template-rows: 0fr; }
+  .ref-collapse-inner { overflow: hidden; min-height: 0; }
+  .ref-items {
+    padding: 14px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 12px;
+    align-items: start;
+  }
+  .ref-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 10px 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    height: 100%;
+    box-sizing: border-box;
+    transition: border-color .15s, transform .1s;
+  }
+  .ref-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .ref-card img.ref-icon {
+    width: 84px;
+    height: 84px;
+    object-fit: contain;
+    background: #1a1d22;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    flex: 0 0 auto;
+    margin-bottom: 8px;
+  }
+  .ref-card-body { display: flex; flex-direction: column; align-items: center; flex: 1; width: 100%; }
+  .ref-card-name {
+    font-size: 12.5px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    min-height: 2.6em;
+  }
+  .ref-stats { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; }
+  .ref-stat {
+    font-size: 10.5px;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 2px 6px;
+    max-width: 100%;
+    box-sizing: border-box;
+    white-space: normal;
+    word-break: break-word;
+    overflow-wrap: break-word;
+  }
+  .ref-stat b { color: var(--accent); }
+  .ref-controls { display: flex; gap: 10px; align-items: center; margin-bottom: 14px; flex-wrap: wrap; }
+  .ref-controls input, .ref-controls select {
+    background: var(--bg); color: var(--text); border: 1px solid var(--border);
+    border-radius: 4px; padding: 6px 10px; font-size: 13px;
+  }
+  .ref-controls button {
+    background: var(--bg); color: var(--text); border: 1px solid var(--border);
+    border-radius: 4px; padding: 6px 10px; font-size: 13px; cursor: pointer;
+  }
+  .ref-controls button:hover { border-color: var(--accent); }
+  .ref-controls button:disabled { opacity: 0.5; cursor: default; }
+  .ref-updated { color: var(--muted); font-size: 12px; }
+  .goons-mode-btn {
+    background: var(--bg); color: var(--muted); border: 1px solid var(--border);
+    border-radius: 4px; padding: 6px 14px; font-size: 13px; cursor: pointer; font-weight: 600;
+  }
+  .goons-mode-btn:hover { border-color: var(--accent); }
+  .goons-mode-btn.active { background: var(--accent); color: #14161a; border-color: var(--accent); }
+  .goons-last-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 22px;
+    text-align: center;
+    margin-bottom: 16px;
+  }
+  .goons-last-card .label { color: var(--muted); font-size: 13px; margin-bottom: 6px; }
+  .goons-last-card .map-name { font-size: 32px; font-weight: 700; color: var(--accent); margin-bottom: 6px; }
+  .goons-last-card .time-ago { font-size: 14px; color: var(--text); }
+  .goons-last-card .freshness {
+    display: inline-block; margin-top: 10px; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600;
+  }
+  .freshness.fresh { background: rgba(76,175,80,0.15); color: var(--green); border: 1px solid var(--green); }
+  .freshness.aging { background: rgba(224,168,87,0.15); color: #e0a857; border: 1px solid #e0a857; }
+  .freshness.stale { background: rgba(224,87,87,0.15); color: var(--red); border: 1px solid var(--red); }
+  .goons-history { padding: 10px 14px; display: flex; flex-direction: column; gap: 6px; }
+  .goons-history-row {
+    display: flex; justify-content: space-between; font-size: 13px;
+    padding: 6px 4px; border-bottom: 1px solid var(--border);
+  }
+  .goons-history-row:last-child { border-bottom: none; }
+  .goons-history-row .map { font-weight: 600; }
+  .goons-history-row .when { color: var(--muted); }
+  .goons-squad-info { padding: 14px; }
+  .goons-squad-info p { margin: 0 0 10px; font-size: 13px; color: var(--text); }
+  .goons-squad-info .squad-maps { display: flex; flex-wrap: wrap; gap: 8px; }
+  .map-info-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 18px 20px;
+  }
+  .map-info-card h2 {
+    margin: 0 0 4px;
+    color: var(--accent);
+    font-size: 19px;
+  }
+  .map-info-stats {
+    display: flex;
+    gap: 18px;
+    color: var(--muted);
+    font-size: 13px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+  .map-info-stats b { color: var(--text); }
+  .map-open-btn {
+    display: inline-block;
+    background: var(--accent);
+    color: #14161a;
+    border: none;
+    border-radius: 5px;
+    padding: 9px 18px;
+    font-size: 13.5px;
+    font-weight: 600;
+    text-decoration: none;
+    margin-bottom: 18px;
+  }
+  .map-open-btn:hover { opacity: 0.9; }
+  .map-sections { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  @media (max-width: 800px) { .map-sections { grid-template-columns: 1fr; } }
+  .map-sections h3 {
+    font-size: 14px;
+    color: var(--text);
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 6px;
+    margin-bottom: 8px;
+  }
+  .boss-row, .extract-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    padding: 5px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .extract-row .badge { font-size: 10.5px; }
+  .faction-pmc { color: var(--red); border-color: var(--red); }
+  .faction-scav { color: #e0a857; border-color: #e0a857; }
+  .faction-shared { color: var(--green); border-color: var(--green); }
+
+  .map-visual-wrap {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: #0c0d0f;
+    overflow: hidden;
+    height: 640px;
+    margin-bottom: 18px;
+    position: relative;
+    cursor: grab;
+    user-select: none;
+  }
+  .map-visual-wrap.dragging { cursor: grabbing; }
+  .map-visual-zoom-controls {
+    position: sticky;
+    top: 8px;
+    left: 8px;
+    z-index: 5;
+    display: inline-flex;
+    gap: 4px;
+    margin: 8px;
+  }
+  .map-visual-zoom-controls button {
+    background: var(--panel2);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    width: 28px;
+    height: 28px;
+    cursor: pointer;
+    font-size: 14px;
+  }
+  .map-visual-zoom-controls button:hover { border-color: var(--accent); }
+  .map-visual-inner {
+    position: absolute;
+    top: 0;
+    left: 0;
+    transform-origin: 0 0;
+    width: max-content;
+  }
+  .map-visual-inner img.base-map { display: block; max-width: none; width: 1400px; height: auto; }
+  .map-visual-note {
+    color: var(--muted);
+    font-size: 11.5px;
+    padding: 6px 2px 14px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Escape from Tarkov - MohiKov</h1>
+  <div id="tarkovGameTime">
+    <span>&#9728;&#65039; Day: <span id="tarkovGameTimeDay">--:--:--</span></span>
+    <span>&#127769; Night: <span id="tarkovGameTimeNight">--:--:--</span></span>
+  </div>
+  <div class="top-tabs">
+    <button id="navQuests" class="active">Quests</button>
+    <button id="navLootMaps">Loot Maps</button>
+    <button id="navAmmo">Ammo</button>
+    <button id="navArmor">Armor</button>
+    <button id="navGoons">Goons Tracker</button>
+  </div>
+  <div id="questControls" class="controls">
+    <input id="search" type="text" placeholder="Search quests... (press / to focus)">
+    <select id="traderFilter"><option value="">All Traders</option></select>
+    <select id="mapFilter"><option value="">All Maps</option></select>
+    <select id="sortBy">
+      <option value="level">Sort: Level</option>
+      <option value="name">Sort: Name</option>
+    </select>
+    <label style="font-size:13px;color:var(--muted);">Your level:
+      <input id="levelInput" type="number" min="1" max="79" style="width:55px;" value="1">
+    </label>
+    <button id="filterAll" class="active">All</button>
+    <button id="filterAvailable">Available Now</button>
+    <button id="filterLocked">Locked</button>
+    <button id="filterDone">Completed</button>
+    <button id="expandAllBtn">Expand All</button>
+    <button id="collapseAllBtn">Collapse All</button>
+    <button id="exportBtn">Export</button>
+    <button id="importBtn">Import</button>
+    <button id="clearBtn">Reset Progress</button>
+    <input id="importFile" type="file" accept="application/json" style="display:none;">
+    <span id="progress">0 / 0<span id="progressBarOuter"><span id="progressBarInner"></span></span></span>
+  </div>
+</header>
+
+<main id="questsView">
+  <div id="status"><div class="spinner"></div>Loading quest data from tarkov.dev...</div>
+  <div id="questList"></div>
+</main>
+
+<div id="lootMapsView" style="display:none;">
+  <div class="map-tabs" id="mapTabs"></div>
+  <div id="mapInfoContainer" style="margin-top:14px;"></div>
+</div>
+
+<div id="ammoView" style="display:none;">
+  <div class="ref-page">
+    <div class="ref-controls">
+      <input id="ammoSearch" type="text" placeholder="Search ammo...">
+      <button id="ammoRefreshBtn">&#8635; Refresh</button>
+      <span id="ammoUpdated" class="ref-updated"></span>
+    </div>
+  </div>
+  <div id="ammoStatus" class="ref-status"><div class="spinner"></div>Loading ammo data from tarkov.dev...</div>
+  <div id="ammoList" class="ref-page"></div>
+</div>
+
+<div id="armorView" style="display:none;">
+  <div class="ref-page">
+    <div class="ref-controls">
+      <input id="armorSearch" type="text" placeholder="Search armor...">
+      <button id="armorRefreshBtn">&#8635; Refresh</button>
+      <span id="armorUpdated" class="ref-updated"></span>
+    </div>
+  </div>
+  <div id="armorStatus" class="ref-status"><div class="spinner"></div>Loading armor data from tarkov.dev...</div>
+  <div id="armorList" class="ref-page"></div>
+</div>
+
+<div id="goonsView" style="display:none;">
+  <div class="ref-page">
+    <div class="ref-controls">
+      <button id="goonsModeRegular" class="goons-mode-btn">PvP</button>
+      <button id="goonsModePve" class="goons-mode-btn active">PvE</button>
+      <button id="goonsRefreshBtn">&#8635; Refresh</button>
+      <span id="goonsUpdated" class="ref-updated"></span>
+    </div>
+    <div id="goonsStatus" class="ref-status"><div class="spinner"></div>Loading goon reports from tarkov.dev...</div>
+    <div id="goonsContent" style="display:none;">
+      <div class="goons-last-card" id="goonsLastCard"></div>
+      <div class="ref-group">
+        <div class="ref-group-header"><h2>Recent Sightings</h2></div>
+        <div id="goonsHistory" class="goons-history"></div>
+      </div>
+      <div class="ref-group">
+        <div class="ref-group-header"><h2>Squad &amp; Spawn Maps</h2></div>
+        <div id="goonsSquadInfo" class="goons-squad-info"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>Quest and location data from <a href="https://tarkov.dev" target="_blank">tarkov.dev</a>. Progress is saved locally in your browser only. Click any quest card for full details.<br><span style="color: var(--accent); font-size: 20px; font-weight: 700;">Made by Mohi, the one and only Tarkov OG.</span></footer>
+<div id="toast"></div>
+
+<div id="modalOverlay">
+  <div id="modalBox">
+    <button id="modalClose">&times;</button>
+    <div id="modalContent"></div>
+  </div>
+</div>
+
+<script>
+// In-game Tarkov time runs 7x faster than real time, with a UTC+3 offset
+// (00:00:00 in-game lands at unix 10,800,000ms, i.e. +3 hours - Russia).
+// Formula credit: Adam Burgess (https://github.com/adamburgess/tarkov-time),
+// also used as-is by tarkov.dev's own Time.jsx component.
+const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+const TWELVE_HOURS_MS = 12 * 60 * 60 * 1000;
+
+// Each raid's map clock starts in one of two cycles, 12 hours apart - you
+// can't know which until you're actually in the raid, so both are shown.
+// extraOffsetMs picks between them (0 = the "left" cycle tarkov.dev shows
+// first, 12h = the other).
+function getTarkovTime(date, extraOffsetMs) {
+  const TARKOV_RATIO = 7;
+  const RUSSIA_OFFSET_MS = 3 * 60 * 60 * 1000;
+  const tarkovMs = (RUSSIA_OFFSET_MS + extraOffsetMs + date.getTime() * TARKOV_RATIO) % ONE_DAY_MS;
+  return new Date(tarkovMs);
+}
+function formatHMS(t) {
+  const hh = String(t.getUTCHours()).padStart(2, '0');
+  const mm = String(t.getUTCMinutes()).padStart(2, '0');
+  const ss = String(t.getUTCSeconds()).padStart(2, '0');
+  return `${hh}:${mm}:${ss}`;
+}
+// Rough day/night split for labeling which of the two cycles is "daytime"
+// right now (not a precise in-game sunrise/sunset model, just a label).
+function isDaytime(t) {
+  const h = t.getUTCHours();
+  return h >= 6 && h < 21;
+}
+function updateTarkovGameTimeDisplay() {
+  const now = new Date();
+  const cycleA = getTarkovTime(now, 0);
+  const cycleB = getTarkovTime(now, TWELVE_HOURS_MS);
+  const day = isDaytime(cycleA) ? cycleA : cycleB;
+  const night = isDaytime(cycleA) ? cycleB : cycleA;
+  const dayEl = document.getElementById('tarkovGameTimeDay');
+  const nightEl = document.getElementById('tarkovGameTimeNight');
+  if (dayEl) dayEl.textContent = formatHMS(day);
+  if (nightEl) nightEl.textContent = formatHMS(night);
+}
+updateTarkovGameTimeDisplay();
+setInterval(updateTarkovGameTimeDisplay, 1000);
+
+const STORAGE_KEY = 'tarkovCompletedQuests';
+const COLLAPSE_KEY = 'tarkovCollapsedTraders';
+let tasks = [];
+let traderImages = {};
+let completed = new Set(JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'));
+let collapsedTraders = new Set(JSON.parse(localStorage.getItem(COLLAPSE_KEY) || '[]'));
+let currentFilter = 'all';
+let toastTimer = null;
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 1800);
+}
+
+function saveCompleted() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify([...completed]));
+}
+function saveCollapsed() {
+  localStorage.setItem(COLLAPSE_KEY, JSON.stringify([...collapsedTraders]));
+}
+
+async function loadTasks() {
+  const query = `{ tasks(lang: en) {
+    id name minPlayerLevel kappaRequired wikiLink
+    trader { name }
+    map { name }
+    taskRequirements { task { id name } status }
+    objectives { description type maps { name } }
+  } }`;
+  const res = await fetch('https://api.tarkov.dev/graphql', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query })
+  });
+  const json = await res.json();
+  if (json.errors) throw new Error(JSON.stringify(json.errors));
+  return json.data.tasks;
+}
+
+async function loadTraderImages() {
+  const query = `{ traders(lang: en) { name imageLink } }`;
+  const res = await fetch('https://api.tarkov.dev/graphql', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query })
+  });
+  const json = await res.json();
+  if (json.errors) return {};
+  const map = {};
+  json.data.traders.forEach(t => { map[t.name] = t.imageLink; });
+  return map;
+}
+
+async function loadMaps() {
+  const query = `{ maps(lang: en) {
+    name normalizedName wiki players raidDuration minPlayerLevel
+    bosses { name spawnChance }
+    extracts { name faction position { x y z } }
+  } }`;
+  const res = await fetch('https://api.tarkov.dev/graphql', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query })
+  });
+  const json = await res.json();
+  if (json.errors) return [];
+  const excluded = ['ground-zero-tutorial', 'ground-zero-21', 'night-factory'];
+  return json.data.maps.filter(m => !excluded.includes(m.normalizedName));
+}
+
+async function loadAmmo() {
+  const query = `{ ammo(lang: en) {
+    caliber damage armorDamage penetrationPower penetrationChance fragmentationChance
+    item { name iconLink }
+  } }`;
+  const res = await fetch('https://api.tarkov.dev/graphql', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query })
+  });
+  const json = await res.json();
+  if (json.errors) return [];
+  return json.data.ammo.filter(a => a.item);
+}
+
+async function loadArmor() {
+  const query = `{ items(categoryNames: ["Armor", "Headwear"]) {
+    name iconLink
+    properties {
+      ... on ItemPropertiesArmor { class durability zones armorType bluntThroughput material { name } }
+      ... on ItemPropertiesHelmet { class durability armorType bluntThroughput material { name } }
+    }
+  } }`;
+  const res = await fetch('https://api.tarkov.dev/graphql', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query })
+  });
+  const json = await res.json();
+  if (json.errors) return [];
+  return json.data.items.filter(i => i.properties && i.properties.class);
+}
+
+let goonsGameMode = 'pve';
+let lastGoonReports = null;
+
+async function loadGoonReports(gameMode) {
+  const query = `{ goonReports(gameMode: ${gameMode}, lang: en, limit: 10) {
+    timestamp
+    map { name }
+  } }`;
+  const res = await fetch('https://api.tarkov.dev/graphql', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query })
+  });
+  const json = await res.json();
+  if (json.errors) throw new Error(JSON.stringify(json.errors));
+  return json.data.goonReports;
+}
+
+// Known maps the Goons squad (Knight, Big Pipe, Birdeye) can roam to, with
+// spawn chance pulled from the same maps() boss data used in Loot Maps.
+const GOON_SQUAD_MAPS = [
+  { map: 'Customs', chance: 0.3 },
+  { map: 'Woods', chance: 0.25 },
+  { map: 'Lighthouse', chance: 0.3 },
+  { map: 'Shoreline', chance: 0.3 },
+];
+
+function timeAgoText(ms) {
+  const mins = Math.floor(ms / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins} min ago`;
+  const hrs = Math.floor(mins / 60);
+  const remMins = mins % 60;
+  return `${hrs}h ${remMins}m ago`;
+}
+
+function freshnessClass(ms) {
+  const mins = ms / 60000;
+  if (mins < 30) return 'fresh';
+  if (mins < 120) return 'aging';
+  return 'stale';
+}
+
+function freshnessLabel(cls) {
+  return cls === 'fresh' ? 'Likely still there' : cls === 'aging' ? 'May have moved' : 'Outdated - probably moved';
+}
+
+function renderGoonsView(reports) {
+  lastGoonReports = reports;
+  const content = document.getElementById('goonsContent');
+  const status = document.getElementById('goonsStatus');
+  if (!reports || reports.length === 0) {
+    status.innerHTML = 'No recent goon reports for this mode.';
+    status.style.display = 'block';
+    content.style.display = 'none';
+    return;
+  }
+  status.style.display = 'none';
+  content.style.display = 'block';
+
+  const now = Date.now();
+  const latest = reports[0];
+  const latestMs = now - Number(latest.timestamp);
+  const cls = freshnessClass(latestMs);
+
+  document.getElementById('goonsLastCard').innerHTML = `
+    <div class="label">Last Reported Location</div>
+    <div class="map-name">${latest.map.name}</div>
+    <div class="time-ago">${timeAgoText(latestMs)}</div>
+    <div class="freshness ${cls}">${freshnessLabel(cls)}</div>
+  `;
+
+  document.getElementById('goonsHistory').innerHTML = reports.map(r => {
+    const ageMs = now - Number(r.timestamp);
+    return `<div class="goons-history-row"><span class="map">${r.map.name}</span><span class="when">${timeAgoText(ageMs)}</span></div>`;
+  }).join('');
+
+  document.getElementById('goonsSquadInfo').innerHTML = `
+    <p>The Goons (Knight, Big Pipe &amp; Birdeye) roam as a squad between a fixed set of maps rather than spawning fresh each raid - reports above are community-submitted sightings, free via tarkov.dev's public API.</p>
+    <div class="squad-maps">
+      ${GOON_SQUAD_MAPS.map(g => `<span class="ref-stat">${g.map} <b>${Math.round(g.chance * 100)}%</b></span>`).join('')}
+    </div>
+  `;
+}
+
+async function refreshGoons() {
+  const btn = document.getElementById('goonsRefreshBtn');
+  if (btn) btn.disabled = true;
+  try {
+    const reports = await loadGoonReports(goonsGameMode);
+    renderGoonsView(reports);
+    document.getElementById('goonsUpdated').textContent = `Updated ${formatUpdatedTime()}`;
+  } catch (err) {
+    document.getElementById('goonsStatus').innerHTML = 'Failed to load goon reports: ' + err.message;
+    document.getElementById('goonsStatus').style.display = 'block';
+    document.getElementById('goonsContent').style.display = 'none';
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+const refCollapsed = { ammo: new Set(), armor: new Set() };
+
+function renderRefGroups(containerId, groups, kind) {
+  const listEl = document.getElementById(containerId);
+  listEl.innerHTML = '';
+  groups.forEach(({ title, cards }) => {
+    const group = document.createElement('div');
+    group.className = 'ref-group' + (refCollapsed[kind].has(title) ? ' collapsed' : '');
+
+    const header = document.createElement('div');
+    header.className = 'ref-group-header';
+    header.innerHTML = `<span class="trader-caret ref-caret">&#9660;</span><h2>${title}</h2><span class="trader-count">${cards.length}</span>`;
+    header.addEventListener('click', () => {
+      group.classList.toggle('collapsed');
+      if (group.classList.contains('collapsed')) refCollapsed[kind].add(title);
+      else refCollapsed[kind].delete(title);
+    });
+    group.appendChild(header);
+
+    const collapseWrap = document.createElement('div');
+    collapseWrap.className = 'ref-collapse';
+    const collapseInner = document.createElement('div');
+    collapseInner.className = 'ref-collapse-inner';
+    const itemsWrap = document.createElement('div');
+    itemsWrap.className = 'ref-items';
+    itemsWrap.innerHTML = cards.join('');
+    collapseInner.appendChild(itemsWrap);
+    collapseWrap.appendChild(collapseInner);
+    group.appendChild(collapseWrap);
+
+    listEl.appendChild(group);
+  });
+}
+
+function ammoCardHtml(a) {
+  return `
+    <div class="ref-card">
+      <img class="ref-icon" src="${a.item.iconLink}" alt="${a.item.name}" loading="lazy">
+      <div class="ref-card-body">
+        <div class="ref-card-name">${a.item.name}</div>
+        <div class="ref-stats">
+          <span class="ref-stat">Dmg <b>${a.damage}</b></span>
+          <span class="ref-stat">Pen Pwr <b>${a.penetrationPower}</b></span>
+          <span class="ref-stat">Pen % <b>${Math.round((a.penetrationChance || 0) * 100)}</b></span>
+          <span class="ref-stat">Armor Dmg <b>${a.armorDamage}</b></span>
+          <span class="ref-stat">Frag % <b>${Math.round((a.fragmentationChance || 0) * 100)}</b></span>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function armorCardHtml(it) {
+  const p = it.properties;
+  return `
+    <div class="ref-card">
+      <img class="ref-icon" src="${it.iconLink}" alt="${it.name}" loading="lazy">
+      <div class="ref-card-body">
+        <div class="ref-card-name">${it.name}</div>
+        <div class="ref-stats">
+          <span class="ref-stat">Class <b>${p.class}</b></span>
+          <span class="ref-stat">Durability <b>${p.durability}</b></span>
+          ${p.armorType ? `<span class="ref-stat">${p.armorType}</span>` : ''}
+          ${p.material ? `<span class="ref-stat">${p.material.name}</span>` : ''}
+          ${p.bluntThroughput != null ? `<span class="ref-stat">Blunt <b>${p.bluntThroughput}</b></span>` : ''}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+let ammoData = [];
+function renderAmmoView() {
+  const search = (document.getElementById('ammoSearch') || {}).value || '';
+  const term = search.toLowerCase();
+  const byCaliber = {};
+  ammoData
+    .filter(a => !term || a.item.name.toLowerCase().includes(term))
+    .forEach(a => { (byCaliber[a.caliber] = byCaliber[a.caliber] || []).push(a); });
+
+  const groups = Object.keys(byCaliber).sort().map(caliber => ({
+    title: caliber.replace('Caliber', ''),
+    cards: byCaliber[caliber]
+      .slice()
+      .sort((a, b) => b.penetrationPower - a.penetrationPower)
+      .map(ammoCardHtml),
+  }));
+  renderRefGroups('ammoList', groups, 'ammo');
+}
+
+let armorData = [];
+function renderArmorView() {
+  const search = (document.getElementById('armorSearch') || {}).value || '';
+  const term = search.toLowerCase();
+  const byType = { 'Body Armor': [], Helmets: [] };
+  armorData
+    .filter(it => !term || it.name.toLowerCase().includes(term))
+    .forEach(it => {
+      const isHelmet = !it.properties.zones;
+      (isHelmet ? byType.Helmets : byType['Body Armor']).push(it);
+    });
+
+  const groups = Object.keys(byType).map(title => ({
+    title,
+    cards: byType[title]
+      .slice()
+      .sort((a, b) => b.properties.class - a.properties.class)
+      .map(armorCardHtml),
+  })).filter(g => g.cards.length);
+  renderRefGroups('armorList', groups, 'armor');
+}
+
+function questStatus(task) {
+  if (completed.has(task.id)) return 'completed';
+  const unmet = task.taskRequirements.filter(r => !completed.has(r.task.id));
+  if (unmet.length > 0) return 'locked';
+  const level = parseInt(document.getElementById('levelInput').value || '1', 10);
+  if (task.minPlayerLevel && task.minPlayerLevel > level) return 'locked';
+  return 'available';
+}
+
+function questLocations(task) {
+  const names = new Set();
+  task.objectives.forEach(o => (o.maps || []).forEach(m => names.add(m.name)));
+  if (names.size === 0 && task.map) names.add(task.map.name);
+  return [...names];
+}
+
+function statusLabel(status) {
+  return status === 'locked' ? 'Locked' : status === 'completed' ? 'Completed' : 'Available';
+}
+
+function render() {
+  const search = document.getElementById('search').value.toLowerCase();
+  const traderF = document.getElementById('traderFilter').value;
+  const mapF = document.getElementById('mapFilter').value;
+  const sortBy = document.getElementById('sortBy').value;
+
+  const visible = tasks.filter(t => {
+    if (search && !t.name.toLowerCase().includes(search)) return false;
+    if (traderF && t.trader.name !== traderF) return false;
+    if (mapF && !questLocations(t).includes(mapF)) return false;
+    const status = questStatus(t);
+    if (currentFilter === 'available' && status !== 'available') return false;
+    if (currentFilter === 'locked' && status !== 'locked') return false;
+    if (currentFilter === 'done' && status !== 'completed') return false;
+    return true;
+  });
+
+  const byTrader = {};
+  visible.forEach(t => {
+    const tn = t.trader.name;
+    (byTrader[tn] = byTrader[tn] || []).push(t);
+  });
+
+  const listEl = document.getElementById('questList');
+  listEl.innerHTML = '';
+  Object.keys(byTrader).sort().forEach(traderName => {
+    const questsForTrader = byTrader[traderName].slice().sort((a, b) =>
+      sortBy === 'name' ? a.name.localeCompare(b.name) : (a.minPlayerLevel || 0) - (b.minPlayerLevel || 0)
+    );
+
+    const allForTrader = tasks.filter(t => t.trader.name === traderName);
+    const doneForTrader = allForTrader.filter(t => completed.has(t.id)).length;
+
+    const group = document.createElement('div');
+    group.className = 'trader-group' + (collapsedTraders.has(traderName) ? ' collapsed' : '');
+
+    const headerEl = document.createElement('div');
+    headerEl.className = 'trader-header';
+    const avatarSrc = traderImages[traderName] || '';
+    headerEl.innerHTML = `
+      <span class="trader-caret">&#9660;</span>
+      ${avatarSrc ? `<img class="trader-avatar" src="${avatarSrc}" alt="${traderName}" loading="lazy">` : ''}
+      <h2>${traderName}</h2>
+      <span class="trader-mini-bar"><span class="trader-mini-bar-inner" style="width:${allForTrader.length ? (doneForTrader / allForTrader.length * 100) : 0}%"></span></span>
+      <span class="trader-count">${doneForTrader} / ${allForTrader.length}</span>
+    `;
+    headerEl.addEventListener('click', () => {
+      group.classList.toggle('collapsed');
+      if (group.classList.contains('collapsed')) collapsedTraders.add(traderName);
+      else collapsedTraders.delete(traderName);
+      saveCollapsed();
+    });
+    group.appendChild(headerEl);
+
+    const collapseWrap = document.createElement('div');
+    collapseWrap.className = 'trader-collapse';
+    const collapseInner = document.createElement('div');
+    collapseInner.className = 'collapse-inner';
+    const questsWrap = document.createElement('div');
+    questsWrap.className = 'trader-quests';
+    questsForTrader.forEach(t => questsWrap.appendChild(renderQuestCard(t)));
+    collapseInner.appendChild(questsWrap);
+    collapseWrap.appendChild(collapseInner);
+    group.appendChild(collapseWrap);
+
+    listEl.appendChild(group);
+  });
+
+  const total = tasks.length;
+  const done = tasks.filter(t => completed.has(t.id)).length;
+  document.getElementById('progress').firstChild.textContent = `${done} / ${total} `;
+  document.getElementById('progressBarInner').style.width = total ? `${(done / total * 100).toFixed(1)}%` : '0%';
+
+  document.getElementById('filterAvailable').textContent = `Available Now (${tasks.filter(t => questStatus(t) === 'available').length})`;
+  document.getElementById('filterLocked').textContent = `Locked (${tasks.filter(t => questStatus(t) === 'locked').length})`;
+  document.getElementById('filterDone').textContent = `Completed (${done})`;
+}
+
+function renderQuestCard(t) {
+  const status = questStatus(t);
+  const locations = questLocations(t);
+  const card = document.createElement('div');
+  card.className = `quest-card ${status}`;
+
+  const top = document.createElement('div');
+  top.className = 'quest-card-top';
+
+  const cb = document.createElement('input');
+  cb.type = 'checkbox';
+  cb.checked = completed.has(t.id);
+  cb.addEventListener('click', e => {
+    e.stopPropagation();
+    toggleComplete(t, cb.checked);
+  });
+  top.appendChild(cb);
+
+  const title = document.createElement('div');
+  title.className = 'quest-card-title';
+  title.innerHTML = t.name + (t.kappaRequired ? ' <span class="kappa">&#9733;</span>' : '');
+  top.appendChild(title);
+  card.appendChild(top);
+
+  const badges = document.createElement('div');
+  badges.className = 'badges';
+  badges.innerHTML = `
+    <span class="badge">Lvl ${t.minPlayerLevel || 1}</span>
+    <span class="badge">${locations[0] || 'Any'}${locations.length > 1 ? ' +' + (locations.length - 1) : ''}</span>
+    <span class="badge status-${status}">${statusLabel(status)}</span>
+  `;
+  card.appendChild(badges);
+
+  card.addEventListener('click', () => openModal(t));
+  return card;
+}
+
+function toggleComplete(task, isComplete) {
+  if (isComplete) { completed.add(task.id); showToast(`Marked complete: ${task.name}`); playCompleteSound(); }
+  else { completed.delete(task.id); showToast(`Marked incomplete: ${task.name}`); }
+  saveCompleted();
+  render();
+}
+
+let audioCtx = null;
+function playCompleteSound() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+
+  const now = audioCtx.currentTime;
+  // Quick ascending arpeggio (C5, E5, G5, C6) like an in-game task-complete jingle
+  const notes = [523.25, 659.25, 783.99, 1046.50];
+  notes.forEach((freq, i) => {
+    const startTime = now + i * 0.07;
+    const duration = 0.35;
+
+    const osc = audioCtx.createOscillator();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(freq, startTime);
+
+    const gain = audioCtx.createGain();
+    gain.gain.setValueAtTime(0, startTime);
+    gain.gain.linearRampToValueAtTime(0.25, startTime + 0.015);
+    gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start(startTime);
+    osc.stop(startTime + duration);
+  });
+}
+
+function openModal(t) {
+  const status = questStatus(t);
+  const locations = questLocations(t);
+  const content = document.getElementById('modalContent');
+
+  let html = `<h3>${t.name}${t.kappaRequired ? ' <span class="kappa" style="color:var(--accent);font-size:14px;">&#9733; Kappa</span>' : ''}</h3>`;
+  html += `<div class="badges">
+      <span class="badge">${t.trader.name}</span>
+      <span class="badge">Lvl ${t.minPlayerLevel || 1}</span>
+      <span class="badge status-${status}">${statusLabel(status)}</span>
+      ${locations.map(loc => `<span class="badge">${loc}</span>`).join('')}
+    </div>`;
+
+  if (t.objectives.length) {
+    html += '<strong>Objectives (where to do it):</strong><ul>' + t.objectives.map(o => {
+      const objMaps = (o.maps || []).map(m => m.name);
+      const locTag = objMaps.length
+        ? objMaps.map(m => `<span class="obj-loc" data-map="${m}">${m}</span>`).join('')
+        : '<span class="obj-loc" style="cursor:default;">Hideout / Any location</span>';
+      return `<li>${o.description} ${locTag}</li>`;
+    }).join('') + '</ul>';
+  }
+
+  if (t.taskRequirements.length) {
+    html += '<strong>Requires:</strong><ul>' + t.taskRequirements.map(r => {
+      const met = completed.has(r.task.id);
+      return `<li class="${met ? 'prereq-met' : 'prereq-unmet'}">${r.task.name} ${met ? '(done)' : '(not done)'}</li>`;
+    }).join('') + '</ul>';
+  }
+
+  if (t.wikiLink) {
+    html += `<div style="margin-bottom:14px;"><a href="${t.wikiLink}" target="_blank">Full wiki page &#8599;</a></div>`;
+  }
+
+  html += `<button class="modal-complete-btn" id="modalToggleBtn">${completed.has(t.id) ? 'Mark Incomplete' : 'Mark Complete'}</button>`;
+
+  content.innerHTML = html;
+
+  content.querySelectorAll('.obj-loc[data-map]').forEach(el => {
+    el.addEventListener('click', () => {
+      document.getElementById('mapFilter').value = el.dataset.map;
+      closeModal();
+      render();
+    });
+  });
+
+  document.getElementById('modalToggleBtn').addEventListener('click', () => {
+    toggleComplete(t, !completed.has(t.id));
+    closeModal();
+  });
+
+  document.getElementById('modalOverlay').classList.add('show');
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('show');
+}
+
+document.getElementById('modalClose').addEventListener('click', closeModal);
+document.getElementById('modalOverlay').addEventListener('click', e => {
+  if (e.target.id === 'modalOverlay') closeModal();
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModal();
+});
+
+function populateFilters() {
+  const traders = [...new Set(tasks.map(t => t.trader.name))].sort();
+  const maps = [...new Set(tasks.flatMap(t => questLocations(t)))].sort();
+  const traderSel = document.getElementById('traderFilter');
+  traders.forEach(tr => {
+    const o = document.createElement('option');
+    o.value = tr; o.textContent = tr;
+    traderSel.appendChild(o);
+  });
+  const mapSel = document.getElementById('mapFilter');
+  maps.forEach(m => {
+    const o = document.createElement('option');
+    o.value = m; o.textContent = m;
+    mapSel.appendChild(o);
+  });
+}
+
+function setFilter(name) {
+  currentFilter = name;
+  ['filterAll', 'filterAvailable', 'filterLocked', 'filterDone'].forEach(id => {
+    document.getElementById(id).classList.toggle('active', id === 'filter' + name.charAt(0).toUpperCase() + name.slice(1));
+  });
+  render();
+}
+
+document.getElementById('search').addEventListener('input', render);
+document.getElementById('traderFilter').addEventListener('change', render);
+document.getElementById('mapFilter').addEventListener('change', render);
+document.getElementById('levelInput').addEventListener('input', render);
+document.getElementById('sortBy').addEventListener('change', render);
+document.getElementById('filterAll').addEventListener('click', () => setFilter('all'));
+document.getElementById('filterAvailable').addEventListener('click', () => setFilter('available'));
+document.getElementById('filterLocked').addEventListener('click', () => setFilter('locked'));
+document.getElementById('filterDone').addEventListener('click', () => setFilter('done'));
+
+document.getElementById('expandAllBtn').addEventListener('click', () => {
+  collapsedTraders.clear();
+  saveCollapsed();
+  render();
+  showToast('Expanded all traders');
+});
+document.getElementById('collapseAllBtn').addEventListener('click', () => {
+  tasks.forEach(t => collapsedTraders.add(t.trader.name));
+  saveCollapsed();
+  render();
+  showToast('Collapsed all traders');
+});
+
+document.getElementById('exportBtn').addEventListener('click', () => {
+  const blob = new Blob([JSON.stringify([...completed], null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'tarkov-quest-progress.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('Progress exported');
+});
+
+document.getElementById('importBtn').addEventListener('click', () => {
+  document.getElementById('importFile').click();
+});
+document.getElementById('importFile').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const ids = JSON.parse(reader.result);
+      completed = new Set(ids);
+      saveCompleted();
+      render();
+      showToast('Progress imported');
+    } catch (err) {
+      alert('Invalid file: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+});
+
+document.getElementById('clearBtn').addEventListener('click', () => {
+  if (confirm('Reset all quest progress? This cannot be undone.')) {
+    completed = new Set();
+    saveCompleted();
+    render();
+    showToast('Progress reset');
+  }
+});
+
+document.addEventListener('keydown', e => {
+  if (e.key === '/' && document.activeElement.tagName !== 'INPUT') {
+    e.preventDefault();
+    document.getElementById('search').focus();
+  }
+});
+
+// ---- Loot Maps tab ----
+let maps = [];
+let selectedMap = null;
+
+const NAV_TABS = ['Quests', 'LootMaps', 'Ammo', 'Armor', 'Goons'];
+function switchTab(active) {
+  NAV_TABS.forEach(name => {
+    document.getElementById('nav' + name).classList.toggle('active', name === active);
+  });
+  document.getElementById('questControls').style.display = active === 'Quests' ? 'flex' : 'none';
+  document.getElementById('questsView').style.display = active === 'Quests' ? 'block' : 'none';
+  document.getElementById('lootMapsView').style.display = active === 'LootMaps' ? 'block' : 'none';
+  document.getElementById('ammoView').style.display = active === 'Ammo' ? 'block' : 'none';
+  document.getElementById('armorView').style.display = active === 'Armor' ? 'block' : 'none';
+  document.getElementById('goonsView').style.display = active === 'Goons' ? 'block' : 'none';
+  if (active === 'LootMaps') fitMapToBox();
+}
+document.getElementById('navQuests').addEventListener('click', () => switchTab('Quests'));
+document.getElementById('navLootMaps').addEventListener('click', () => switchTab('LootMaps'));
+document.getElementById('navAmmo').addEventListener('click', () => switchTab('Ammo'));
+document.getElementById('navArmor').addEventListener('click', () => switchTab('Armor'));
+document.getElementById('navGoons').addEventListener('click', () => switchTab('Goons'));
+
+function renderMapTabs() {
+  const tabsEl = document.getElementById('mapTabs');
+  tabsEl.innerHTML = '';
+  maps.forEach(m => {
+    const btn = document.createElement('button');
+    btn.textContent = m.name;
+    btn.className = m.normalizedName === selectedMap ? 'active' : '';
+    btn.addEventListener('click', () => {
+      selectedMap = m.normalizedName;
+      renderMapTabs();
+      renderMapInfo();
+    });
+    tabsEl.appendChild(btn);
+  });
+}
+
+// Official pre-rendered, fully-labeled map images from tarkov.dev's
+// open-source repo (the-hideout/tarkov-dev, MIT licensed). These already
+// have every extract/landmark baked in by their map artists, which is far
+// more reliable than recomputing marker positions from raw coordinates.
+const MAP_IMAGES = {
+  'streets-of-tarkov': 'streets-2d.jpg',
+  'ground-zero':       'ground-zero-2d.jpg',
+  'customs':           'customs-2d.jpg',
+  'factory':           'factory-2d.jpg',
+  'interchange':       'interchange-2d.jpg',
+  'lighthouse':        'lighthouse-2d.jpg',
+  'reserve':           'reserve-2d.jpg',
+  'shoreline':         'shoreline-2d.jpg',
+  'terminal':          'terminal-2d.jpg',
+  'woods':             'woods-2d.jpg',
+  'the-lab':           'labs-2d.jpg',
+  'the-labyrinth':      'labyrinth-2d.jpg',
+  'icebreaker':        'icebreaker-2d.jpg',
+};
+let mapZoom = 1;
+let panX = 0;
+let panY = 0;
+// The rendered (unscaled) size of the map image, set precisely from the
+// image's actual decoded pixel dimensions once it loads (see onload below).
+// Reading sizes back out of the DOM via offsetWidth/offsetHeight right after
+// load proved unreliable for height, since it depends on layout having fully
+// caught up with the just-decoded image - this avoids that timing issue.
+const MAP_IMAGE_RENDER_WIDTH = 1400;
+let baseMapW = MAP_IMAGE_RENDER_WIDTH;
+let baseMapH = MAP_IMAGE_RENDER_WIDTH;
+// The zoom level at which the image exactly covers the box with no empty
+// space (like a "background-size: cover" fit). This is the floor for
+// zooming out - going smaller than this is what produced the black bars.
+let minZoom = 0.5;
+
+function onMapImageLoaded(img) {
+  baseMapW = MAP_IMAGE_RENDER_WIDTH;
+  baseMapH = MAP_IMAGE_RENDER_WIDTH * (img.naturalHeight / img.naturalWidth);
+  fitMapToBox();
+}
+
+// Recomputes the cover-fit zoom/pan from the box's current size. Needs to be
+// re-run any time the box becomes visible after being hidden, since a hidden
+// (display:none) box reports 0 width/height - if the map first loaded while
+// the Loot Maps tab wasn't selected yet, that 0 got baked in as a zoom of 0
+// (an invisible map) that only fixed itself once a fresh image load happened
+// to occur while visible (e.g. switching maps). Calling this on tab-open
+// covers that case without needing the image to reload.
+function fitMapToBox() {
+  const wrap = document.getElementById('mapVisualWrap');
+  if (!wrap) return;
+  const viewW = wrap.clientWidth, viewH = wrap.clientHeight;
+  if (!viewW || !viewH) return;
+
+  minZoom = Math.max(viewW / baseMapW, viewH / baseMapH);
+  mapZoom = minZoom;
+  panX = (viewW - baseMapW * mapZoom) / 2;
+  panY = (viewH - baseMapH * mapZoom) / 2;
+  applyMapTransform();
+}
+
+function applyMapTransform() {
+  const inner = document.getElementById('mapVisualInner');
+  if (inner) inner.style.transform = `translate(${panX}px, ${panY}px) scale(${mapZoom})`;
+}
+
+// Stops you panning the content far enough that empty space would show
+// at the edges - content always at least covers the box on both axes,
+// since mapZoom can never go below the cover-fit minZoom.
+function clampPan() {
+  const wrap = document.getElementById('mapVisualWrap');
+  if (!wrap) return;
+  const viewW = wrap.clientWidth, viewH = wrap.clientHeight;
+  const contentW = baseMapW * mapZoom, contentH = baseMapH * mapZoom;
+  panX = Math.min(0, Math.max(viewW - contentW, panX));
+  panY = Math.min(0, Math.max(viewH - contentH, panY));
+}
+
+// Changes zoom while keeping whatever point is currently at the center of
+// the visible viewport centered after the scale changes (instead of always
+// scaling from the top-left, which made the view drift off-screen on zoom out).
+function setMapZoom(newZoom) {
+  const wrap = document.getElementById('mapVisualWrap');
+  const inner = document.getElementById('mapVisualInner');
+  if (!wrap || !inner) return;
+  newZoom = Math.max(minZoom, Math.min(4, newZoom));
+
+  const viewW = wrap.clientWidth, viewH = wrap.clientHeight;
+  const contentX = (viewW / 2 - panX) / mapZoom;
+  const contentY = (viewH / 2 - panY) / mapZoom;
+
+  mapZoom = newZoom;
+  panX = viewW / 2 - contentX * mapZoom;
+  panY = viewH / 2 - contentY * mapZoom;
+
+  clampPan();
+  applyMapTransform();
+}
+
+function resetMapView() {
+  mapZoom = minZoom;
+  const wrap = document.getElementById('mapVisualWrap');
+  const viewW = wrap ? wrap.clientWidth : 0;
+  const viewH = wrap ? wrap.clientHeight : 0;
+  panX = (viewW - baseMapW * mapZoom) / 2;
+  panY = (viewH - baseMapH * mapZoom) / 2;
+  applyMapTransform();
+}
+
+function renderMapVisual(m) {
+  const img = MAP_IMAGES[m.normalizedName];
+  if (!img) {
+    return `<div class="map-visual-note">No map image available for this location yet — use the link above to view it on tarkov.dev.</div>`;
+  }
+  return `
+    <div class="map-visual-wrap" id="mapVisualWrap">
+      <div class="map-visual-zoom-controls">
+        <button id="mapZoomOut">&minus;</button>
+        <button id="mapZoomReset">&#9678;</button>
+        <button id="mapZoomIn">+</button>
+      </div>
+      <div class="map-visual-inner" id="mapVisualInner">
+        <img class="base-map" src="https://raw.githubusercontent.com/the-hideout/tarkov-dev/main/public/maps/${img}" alt="${m.name} map" onload="onMapImageLoaded(this);">
+      </div>
+    </div>
+    <div class="map-visual-note">Official labeled map from tarkov.dev — extracts and landmarks are already marked. Click and drag to pan, scroll the mouse wheel or use +/&minus; to zoom.</div>
+  `;
+}
+
+function renderMapInfo() {
+  const container = document.getElementById('mapInfoContainer');
+  const m = maps.find(x => x.normalizedName === selectedMap);
+  if (!m) { container.innerHTML = ''; return; }
+  mapZoom = 1;
+  panX = 0;
+  panY = 0;
+  baseMapW = MAP_IMAGE_RENDER_WIDTH;
+  baseMapH = MAP_IMAGE_RENDER_WIDTH;
+
+  const bossesHtml = (m.bosses || []).length
+    ? m.bosses.map(b => `<div class="boss-row"><span>${b.name}</span><span>${Math.round((b.spawnChance || 0) * 100)}% spawn chance</span></div>`).join('')
+    : '<div style="color:var(--muted);font-size:13px;">No known boss spawns.</div>';
+
+  const factionClass = f => f === 'pmc' ? 'faction-pmc' : f === 'scav' ? 'faction-scav' : 'faction-shared';
+  const extractsHtml = (m.extracts || []).length
+    ? m.extracts.map(e => `<div class="extract-row"><span>${e.name}</span><span class="badge ${factionClass(e.faction)}">${e.faction}</span></div>`).join('')
+    : '<div style="color:var(--muted);font-size:13px;">No extract data.</div>';
+
+  container.innerHTML = `
+    <div class="map-info-card">
+      <h2>${m.name}</h2>
+      <div class="map-info-stats">
+        <span>Players: <b>${m.players || '?'}</b></span>
+        <span>Raid duration: <b>${m.raidDuration || '?'} min</b></span>
+        <span>Min level: <b>${m.minPlayerLevel || 1}</b></span>
+      </div>
+      ${renderMapVisual(m)}
+      <a class="map-open-btn" href="https://tarkov.dev/map/${m.normalizedName}" target="_blank">Open on tarkov.dev instead &#8599;</a>
+      <div class="map-sections">
+        <div>
+          <h3>Boss Spawns</h3>
+          ${bossesHtml}
+        </div>
+        <div>
+          <h3>Extracts (${(m.extracts || []).length})</h3>
+          ${extractsHtml}
+        </div>
+      </div>
+      ${m.wiki ? `<div style="margin-top:16px;"><a href="${m.wiki}" target="_blank">Wiki page &#8599;</a></div>` : ''}
+    </div>
+  `;
+
+  const zoomIn = document.getElementById('mapZoomIn');
+  const zoomOut = document.getElementById('mapZoomOut');
+  const zoomReset = document.getElementById('mapZoomReset');
+  zoomIn && zoomIn.addEventListener('click', () => setMapZoom(mapZoom + 0.25));
+  zoomOut && zoomOut.addEventListener('click', () => setMapZoom(mapZoom - 0.25));
+  zoomReset && zoomReset.addEventListener('click', resetMapView);
+}
+
+// Click-and-drag panning for the map viewer. Attached once via event
+// delegation (rather than inside renderMapInfo) so switching maps never
+// stacks up duplicate listeners.
+let mapDragState = null;
+document.addEventListener('mousedown', e => {
+  const wrap = e.target.closest('#mapVisualWrap');
+  if (!wrap) return;
+  mapDragState = {
+    wrap,
+    startX: e.pageX,
+    startY: e.pageY,
+    startPanX: panX,
+    startPanY: panY,
+  };
+  wrap.classList.add('dragging');
+});
+document.addEventListener('mousemove', e => {
+  if (!mapDragState) return;
+  e.preventDefault();
+  const { startX, startY, startPanX, startPanY } = mapDragState;
+  panX = startPanX + (e.pageX - startX);
+  panY = startPanY + (e.pageY - startY);
+  clampPan();
+  applyMapTransform();
+});
+document.addEventListener('mouseup', () => {
+  if (!mapDragState) return;
+  mapDragState.wrap.classList.remove('dragging');
+  mapDragState = null;
+});
+document.addEventListener('mouseleave', () => {
+  if (!mapDragState) return;
+  mapDragState.wrap.classList.remove('dragging');
+  mapDragState = null;
+});
+document.addEventListener('dragstart', e => {
+  if (e.target.closest('#mapVisualWrap')) e.preventDefault();
+});
+document.addEventListener('wheel', e => {
+  if (!e.target.closest('#mapVisualWrap')) return;
+  e.preventDefault();
+  const step = 0.15;
+  setMapZoom(mapZoom + (e.deltaY < 0 ? step : -step));
+}, { passive: false });
+
+loadMaps().then(data => {
+  maps = data.slice().sort((a, b) => a.name.localeCompare(b.name));
+  if (maps.length) selectedMap = maps[0].normalizedName;
+  renderMapTabs();
+  renderMapInfo();
+});
+
+function formatUpdatedTime() {
+  return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+async function refreshAmmo() {
+  const btn = document.getElementById('ammoRefreshBtn');
+  if (btn) btn.disabled = true;
+  try {
+    ammoData = await loadAmmo();
+    document.getElementById('ammoStatus').style.display = 'none';
+    renderAmmoView();
+    document.getElementById('ammoUpdated').textContent = `Updated ${formatUpdatedTime()}`;
+  } catch (err) {
+    document.getElementById('ammoStatus').innerHTML = 'Failed to load ammo data: ' + err.message;
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+async function refreshArmor() {
+  const btn = document.getElementById('armorRefreshBtn');
+  if (btn) btn.disabled = true;
+  try {
+    armorData = await loadArmor();
+    document.getElementById('armorStatus').style.display = 'none';
+    renderArmorView();
+    document.getElementById('armorUpdated').textContent = `Updated ${formatUpdatedTime()}`;
+  } catch (err) {
+    document.getElementById('armorStatus').innerHTML = 'Failed to load armor data: ' + err.message;
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+refreshAmmo();
+refreshArmor();
+refreshGoons();
+
+// Keep stats current without needing a manual reload if the tab is left
+// open across a long play session (e.g. after a game patch changes values).
+// Goon locations move much faster than ammo/armor balance, so refresh more often.
+const AUTO_REFRESH_MS = 10 * 60 * 1000;
+const GOONS_AUTO_REFRESH_MS = 2 * 60 * 1000;
+setInterval(refreshAmmo, AUTO_REFRESH_MS);
+setInterval(refreshArmor, AUTO_REFRESH_MS);
+setInterval(refreshGoons, GOONS_AUTO_REFRESH_MS);
+// Ticks the displayed "X min ago" text forward every 15s using the already-
+// fetched reports, so it reflects the real clock between full data refreshes
+// instead of sitting frozen at whatever it showed at fetch time.
+setInterval(() => { if (lastGoonReports) renderGoonsView(lastGoonReports); }, 15000);
+
+document.getElementById('ammoRefreshBtn').addEventListener('click', refreshAmmo);
+document.getElementById('armorRefreshBtn').addEventListener('click', refreshArmor);
+document.getElementById('goonsRefreshBtn').addEventListener('click', refreshGoons);
+
+document.getElementById('goonsModeRegular').addEventListener('click', () => {
+  goonsGameMode = 'regular';
+  document.getElementById('goonsModeRegular').classList.add('active');
+  document.getElementById('goonsModePve').classList.remove('active');
+  refreshGoons();
+});
+document.getElementById('goonsModePve').addEventListener('click', () => {
+  goonsGameMode = 'pve';
+  document.getElementById('goonsModePve').classList.add('active');
+  document.getElementById('goonsModeRegular').classList.remove('active');
+  refreshGoons();
+});
+
+document.getElementById('ammoSearch').addEventListener('input', renderAmmoView);
+document.getElementById('armorSearch').addEventListener('input', renderArmorView);
+
+Promise.all([loadTasks(), loadTraderImages()]).then(([taskData, images]) => {
+  tasks = taskData;
+  traderImages = images;
+  document.getElementById('status').style.display = 'none';
+  populateFilters();
+  render();
+}).catch(err => {
+  document.getElementById('status').innerHTML = 'Failed to load quest data: ' + err.message;
+});
+</script>
+
+</body>
+</html>
