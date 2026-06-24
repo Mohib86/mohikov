@@ -57,11 +57,11 @@ flowchart TD
 
 ### Show on Map
 
-Every quest photo has a small 📍 "Show on Map" button. tarkov.dev has no per-screenshot coordinates, so the destination is resolved once per quest (every photo in that quest's gallery points at the same resolved view), in tiers:
+A single 📍 "Show on Map" button sits next to the "Quest Photos" heading (not one per photo - they all share the same destination anyway). tarkov.dev has no per-screenshot coordinates, so the destination is resolved once per quest, in tiers:
 
 ```mermaid
 flowchart TD
-    Btn[Click a quest photo's 📍 button] --> Zone{Quest has a calibrated<br/>objective zone?}
+    Btn[Click the quest's 📍 button] --> Zone{Quest has a calibrated<br/>objective zone?}
     Zone -->|Yes| Pin[2D map image + pin overlay<br/>at the real location]
     Zone -->|No| WikiMap{One of the quest's own<br/>gallery photos IS a wiki<br/>map screenshot?}
     WikiMap -->|Yes| WikiImg[Open that photo zoomed in -<br/>wiki artist already drew the marker]
@@ -75,6 +75,11 @@ The pin tier needs a per-map calibration in `MAP_TRANSFORMS` (in `index.html`, n
 Calibrated: Customs, Woods, Ground Zero, Lighthouse, Shoreline, Streets of Tarkov, Reserve, The Labyrinth.
 
 **Deliberately not calibrated:** Factory (+ Night Factory), Interchange, The Lab. Their 2D map images are "exploded" multi-floor-panel layouts (each floor drawn as a separate inset block, not one continuous top-down plane) — a single global transform would place confidently wrong pins. Quests on those maps safely fall through to the Wiki-map/General tier instead. Terminal and Icebreaker have zero zoned objectives in tarkov.dev's data currently, so there's nothing to calibrate yet either.
+
+### Bugs fixed worth remembering
+
+- Quest gallery `<img>` tags used `loading="lazy"`, but they're inserted into the quest modal's `innerHTML` *before* `#modalOverlay` gets its `.show` class (i.e. while still `display:none`) - some browsers never queue a lazy image for loading if it's hidden at insertion time. Same class of bug as the Maps tab's zero-size-box issue. Removed `loading="lazy"` from the gallery photos since they're a small bounded set shown all at once anyway.
+- Fandom's image CDN (`static.wikia.nocookie.net`, what `QUEST_PHOTOS` hotlinks) returns **404 for any image request that carries a Referer header at all** - confirmed by direct testing. Works with no Referer (matches local `file://` testing, or a server-side curl/PowerShell fetch), 404s the instant a real Referer is present, including the live `https://mohib86.github.io/mohikov/` page itself. This is why the gallery worked in local testing but broke on the live site. Fixed with `referrerpolicy="no-referrer"` on every `<img>` that might point at a wiki-hotlinked URL (gallery thumbnails, lightbox, map-pin modal). tarkov.dev's and GitHub's own CDNs don't have this restriction, so `taskImageLink`/`MAP_IMAGES` were never affected.
 
 ## Things deliberately *not* done
 
