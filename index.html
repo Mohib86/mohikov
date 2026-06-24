@@ -30,6 +30,62 @@
     top: 0;
     z-index: 10;
   }
+  .discord-join-btn {
+    position: absolute;
+    top: 14px;
+    right: 20px;
+    background: #5865F2;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: background .15s;
+  }
+  .discord-join-btn:hover { background: #4752C4; }
+  .lang-toggle-btn {
+    position: absolute;
+    top: 14px;
+    left: 20px;
+    background: var(--panel2);
+    color: var(--accent);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: border-color .15s;
+  }
+  .lang-toggle-btn:hover { border-color: var(--accent); }
+  html[dir="rtl"] .lang-toggle-btn { left: auto; right: 20px; }
+  html[dir="rtl"] .discord-join-btn { right: auto; left: 20px; }
+  html[dir="rtl"] body { direction: rtl; }
+  html[dir="rtl"] .controls,
+  html[dir="rtl"] .top-tabs,
+  html[dir="rtl"] .ref-controls,
+  html[dir="rtl"] .map-tabs,
+  html[dir="rtl"] .badges,
+  html[dir="rtl"] .ref-stats,
+  html[dir="rtl"] .flea-price-row,
+  html[dir="rtl"] .map-info-stats { direction: rtl; }
+  html[dir="rtl"] .quest-card-title,
+  html[dir="rtl"] .ref-card-name,
+  html[dir="rtl"] #modalBox,
+  html[dir="rtl"] .ref-status,
+  html[dir="rtl"] .goons-last-card,
+  html[dir="rtl"] .goons-squad-info p { text-align: right; }
+  /* Footer stays centered exactly like the English version regardless of
+     language - no RTL-specific override here, per explicit request. */
+  footer { text-align: center !important; }
+  /* The map pan/zoom system positions everything via raw pixel transforms in
+     JS, not CSS flow direction, so it's intentionally left untouched by RTL. */
+  html[dir="rtl"] .map-visual-wrap, html[dir="rtl"] .map-visual-inner { direction: ltr; }
   header h1 {
     margin: 0 0 4px 0;
     font-size: 28px;
@@ -327,6 +383,13 @@
     font-size: 11px;
     padding: 10px;
   }
+  .footer-credit-en {
+    display: block !important;
+    width: 100% !important;
+    text-align: center !important;
+    direction: ltr !important;
+    margin: 4px 0 !important;
+  }
   a { color: var(--accent); }
   #toast {
     position: fixed;
@@ -476,6 +539,21 @@
     background: var(--bg); color: var(--text); border: 1px solid var(--border);
     border-radius: 4px; padding: 6px 10px; font-size: 13px;
   }
+  #fleaSearch { width: 280px; }
+  .flea-items { grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); }
+  .flea-card { width: 100%; box-sizing: border-box; }
+  .flea-list-heading { color: var(--accent); font-size: 15px; margin: 4px 2px 10px; }
+  .flea-price-rows { width: 100%; display: flex; flex-direction: column; gap: 5px; margin-top: 4px; }
+  .flea-price-row {
+    display: flex; justify-content: space-between; align-items: center; gap: 8px;
+    font-size: 12px; padding: 4px 8px; border-radius: 4px;
+    background: var(--bg); border: 1px solid var(--border);
+  }
+  .flea-price-row.best { border-color: var(--green); background: rgba(76,175,80,0.1); }
+  .flea-price-row .vendor { color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .flea-price-row .price { font-weight: 700; color: var(--accent); white-space: nowrap; flex: 0 0 auto; }
+  .flea-price-row.best .price { color: var(--green); }
+  .flea-fee { font-size: 10.5px; color: var(--muted); margin-top: 4px; }
   .ref-controls button {
     background: var(--bg); color: var(--text); border: 1px solid var(--border);
     border-radius: 4px; padding: 6px 10px; font-size: 13px; cursor: pointer;
@@ -621,45 +699,48 @@
 <body>
 
 <header>
+  <button id="langToggleBtn" class="lang-toggle-btn">AR</button>
+  <a class="discord-join-btn" href="https://discord.gg/gamers-community" target="_blank" rel="noopener noreferrer">&#128172; <span data-i18n="discordJoin">Join our Discord</span></a>
   <h1>Escape from Tarkov - MohiKov</h1>
   <div id="tarkovGameTime">
-    <span>&#9728;&#65039; Day: <span id="tarkovGameTimeDay">--:--:--</span></span>
-    <span>&#127769; Night: <span id="tarkovGameTimeNight">--:--:--</span></span>
+    <span>&#9728;&#65039; <span data-i18n="dayLabel">Day:</span> <span id="tarkovGameTimeDay">--:--:--</span></span>
+    <span>&#127769; <span data-i18n="nightLabel">Night:</span> <span id="tarkovGameTimeNight">--:--:--</span></span>
   </div>
   <div class="top-tabs">
-    <button id="navQuests" class="active">Quests</button>
-    <button id="navLootMaps">Loot Maps</button>
-    <button id="navAmmo">Ammo</button>
-    <button id="navArmor">Armor</button>
-    <button id="navGoons">Goons Tracker</button>
+    <button id="navQuests" class="active" data-i18n="navQuests">Quests</button>
+    <button id="navLootMaps" data-i18n="navLootMaps">Loot Maps</button>
+    <button id="navAmmo" data-i18n="navAmmo">Ammo</button>
+    <button id="navArmor" data-i18n="navArmor">Armor</button>
+    <button id="navGoons" data-i18n="navGoons">Goons Tracker</button>
+    <button id="navFlea" data-i18n="navFlea">Flea Market</button>
   </div>
   <div id="questControls" class="controls">
-    <input id="search" type="text" placeholder="Search quests... (press / to focus)">
-    <select id="traderFilter"><option value="">All Traders</option></select>
-    <select id="mapFilter"><option value="">All Maps</option></select>
+    <input id="search" type="text" data-i18n-placeholder="searchQuestsPlaceholder" placeholder="Search quests... (press / to focus)">
+    <select id="traderFilter"><option value="" data-i18n="allTraders">All Traders</option></select>
+    <select id="mapFilter"><option value="" data-i18n="allMaps">All Maps</option></select>
     <select id="sortBy">
-      <option value="level">Sort: Level</option>
-      <option value="name">Sort: Name</option>
+      <option value="level" data-i18n="sortLevel">Sort: Level</option>
+      <option value="name" data-i18n="sortName">Sort: Name</option>
     </select>
-    <label style="font-size:13px;color:var(--muted);">Your level:
+    <label style="font-size:13px;color:var(--muted);"><span data-i18n="yourLevel">Your level:</span>
       <input id="levelInput" type="number" min="1" max="79" style="width:55px;" value="1">
     </label>
-    <button id="filterAll" class="active">All</button>
-    <button id="filterAvailable">Available Now</button>
-    <button id="filterLocked">Locked</button>
-    <button id="filterDone">Completed</button>
-    <button id="expandAllBtn">Expand All</button>
-    <button id="collapseAllBtn">Collapse All</button>
-    <button id="exportBtn">Export</button>
-    <button id="importBtn">Import</button>
-    <button id="clearBtn">Reset Progress</button>
+    <button id="filterAll" class="active" data-i18n="filterAll">All</button>
+    <button id="filterAvailable" data-i18n="filterAvailable">Available Now</button>
+    <button id="filterLocked" data-i18n="filterLocked">Locked</button>
+    <button id="filterDone" data-i18n="filterDone">Completed</button>
+    <button id="expandAllBtn" data-i18n="expandAll">Expand All</button>
+    <button id="collapseAllBtn" data-i18n="collapseAll">Collapse All</button>
+    <button id="exportBtn" data-i18n="exportBtn">Export</button>
+    <button id="importBtn" data-i18n="importBtn">Import</button>
+    <button id="clearBtn" data-i18n="resetProgress">Reset Progress</button>
     <input id="importFile" type="file" accept="application/json" style="display:none;">
     <span id="progress">0 / 0<span id="progressBarOuter"><span id="progressBarInner"></span></span></span>
   </div>
 </header>
 
 <main id="questsView">
-  <div id="status"><div class="spinner"></div>Loading quest data from tarkov.dev...</div>
+  <div id="status"><div class="spinner"></div><span data-i18n="loadingQuests">Loading quest data from tarkov.dev...</span></div>
   <div id="questList"></div>
 </main>
 
@@ -671,24 +752,24 @@
 <div id="ammoView" style="display:none;">
   <div class="ref-page">
     <div class="ref-controls">
-      <input id="ammoSearch" type="text" placeholder="Search ammo...">
-      <button id="ammoRefreshBtn">&#8635; Refresh</button>
+      <input id="ammoSearch" type="text" data-i18n-placeholder="searchAmmoPlaceholder" placeholder="Search ammo...">
+      <button id="ammoRefreshBtn" data-i18n="refresh">&#8635; Refresh</button>
       <span id="ammoUpdated" class="ref-updated"></span>
     </div>
   </div>
-  <div id="ammoStatus" class="ref-status"><div class="spinner"></div>Loading ammo data from tarkov.dev...</div>
+  <div id="ammoStatus" class="ref-status"><div class="spinner"></div><span data-i18n="loadingAmmo">Loading ammo data from tarkov.dev...</span></div>
   <div id="ammoList" class="ref-page"></div>
 </div>
 
 <div id="armorView" style="display:none;">
   <div class="ref-page">
     <div class="ref-controls">
-      <input id="armorSearch" type="text" placeholder="Search armor...">
-      <button id="armorRefreshBtn">&#8635; Refresh</button>
+      <input id="armorSearch" type="text" data-i18n-placeholder="searchArmorPlaceholder" placeholder="Search armor...">
+      <button id="armorRefreshBtn" data-i18n="refresh">&#8635; Refresh</button>
       <span id="armorUpdated" class="ref-updated"></span>
     </div>
   </div>
-  <div id="armorStatus" class="ref-status"><div class="spinner"></div>Loading armor data from tarkov.dev...</div>
+  <div id="armorStatus" class="ref-status"><div class="spinner"></div><span data-i18n="loadingArmor">Loading armor data from tarkov.dev...</span></div>
   <div id="armorList" class="ref-page"></div>
 </div>
 
@@ -697,25 +778,40 @@
     <div class="ref-controls">
       <button id="goonsModeRegular" class="goons-mode-btn">PvP</button>
       <button id="goonsModePve" class="goons-mode-btn active">PvE</button>
-      <button id="goonsRefreshBtn">&#8635; Refresh</button>
+      <button id="goonsRefreshBtn" data-i18n="refresh">&#8635; Refresh</button>
       <span id="goonsUpdated" class="ref-updated"></span>
     </div>
-    <div id="goonsStatus" class="ref-status"><div class="spinner"></div>Loading goon reports from tarkov.dev...</div>
+    <div id="goonsStatus" class="ref-status"><div class="spinner"></div><span data-i18n="loadingGoons">Loading goon reports from tarkov.dev...</span></div>
     <div id="goonsContent" style="display:none;">
       <div class="goons-last-card" id="goonsLastCard"></div>
       <div class="ref-group">
-        <div class="ref-group-header"><h2>Recent Sightings</h2></div>
+        <div class="ref-group-header"><h2 data-i18n="recentSightings">Recent Sightings</h2></div>
         <div id="goonsHistory" class="goons-history"></div>
       </div>
       <div class="ref-group">
-        <div class="ref-group-header"><h2>Squad &amp; Spawn Maps</h2></div>
+        <div class="ref-group-header"><h2 data-i18n="squadSpawnMaps">Squad &amp; Spawn Maps</h2></div>
         <div id="goonsSquadInfo" class="goons-squad-info"></div>
       </div>
     </div>
   </div>
 </div>
 
-<footer>Quest and location data from <a href="https://tarkov.dev" target="_blank">tarkov.dev</a>. Progress is saved locally in your browser only. Click any quest card for full details.<br><span style="color: var(--accent); font-size: 20px; font-weight: 700;">Made by Mohi, the one and only Tarkov OG.</span></footer>
+<div id="fleaView" style="display:none;">
+  <div class="ref-page">
+    <div class="ref-controls">
+      <input id="fleaSearch" type="text" data-i18n-placeholder="searchFleaPlaceholder" placeholder="Search items (type at least 2 letters)...">
+      <button id="fleaModeRegular" class="goons-mode-btn">PvP</button>
+      <button id="fleaModePve" class="goons-mode-btn active">PvE</button>
+      <button id="fleaRefreshBtn" data-i18n="refresh">&#8635; Refresh</button>
+      <span id="fleaUpdated" class="ref-updated"></span>
+    </div>
+    <div id="fleaStatus" class="ref-status"><div class="spinner"></div><span data-i18n="loadingFlea">Loading most-traded items...</span></div>
+    <h3 id="fleaListHeading" class="flea-list-heading"></h3>
+    <div id="fleaList" class="ref-items flea-items"></div>
+  </div>
+</div>
+
+<footer><span data-i18n="footerNote">Quest and location data from</span> <a href="https://tarkov.dev" target="_blank">tarkov.dev</a><span data-i18n="footerNote2">. Progress is saved locally in your browser only. Click any quest card for full details.</span><br><span class="footer-credit-en" style="color: var(--accent); font-size: 20px; font-weight: 700;">Made by Mohi, the one and only Tarkov OG.</span><br><span style="color: var(--muted); font-size: 11px;">Ver 0.95420 &middot; <span id="lastUpdatedFooter">Last updated: checking...</span></span></footer>
 <div id="toast"></div>
 
 <div id="modalOverlay">
@@ -726,6 +822,158 @@
 </div>
 
 <script>
+// Translates the app's own interface text only. Tarkov-specific proper nouns
+// (trader/map/item/boss names like "Reshala", "Customs", "Goons") are NOT
+// translated: they come live from tarkov.dev's API, which has no Arabic
+// localization (checked their LanguageCode enum - only en/ru/de/fr/es/etc),
+// and there's no official Arabic Tarkov terminology to translate them
+// against anyway. Translating those by hand would risk real inaccuracies.
+const I18N = {
+  en: {
+    discordJoin: 'Join our Discord',
+    navQuests: 'Quests', navLootMaps: 'Loot Maps', navAmmo: 'Ammo', navArmor: 'Armor',
+    navGoons: 'Goons Tracker', navFlea: 'Flea Market',
+    dayLabel: 'Day:', nightLabel: 'Night:',
+    searchQuestsPlaceholder: 'Search quests... (press / to focus)',
+    allTraders: 'All Traders', allMaps: 'All Maps',
+    sortLevel: 'Sort: Level', sortName: 'Sort: Name', yourLevel: 'Your level:',
+    filterAll: 'All', filterAvailable: 'Available Now', filterLocked: 'Locked', filterDone: 'Completed',
+    expandAll: 'Expand All', collapseAll: 'Collapse All',
+    exportBtn: 'Export', importBtn: 'Import', resetProgress: 'Reset Progress',
+    loadingQuests: 'Loading quest data from tarkov.dev...',
+    searchAmmoPlaceholder: 'Search ammo...', refresh: '↻ Refresh',
+    loadingAmmo: 'Loading ammo data from tarkov.dev...',
+    searchArmorPlaceholder: 'Search armor...',
+    loadingArmor: 'Loading armor data from tarkov.dev...',
+    loadingGoons: 'Loading goon reports from tarkov.dev...',
+    recentSightings: 'Recent Sightings', squadSpawnMaps: 'Squad & Spawn Maps',
+    searchFleaPlaceholder: 'Search items (type at least 2 letters)...',
+    loadingFlea: 'Loading most-traded items...',
+    lastUpdatedPrefix: 'Last updated: ',
+    footerNote: 'Quest and location data from',
+    footerNote2: '. Progress is saved locally in your browser only. Click any quest card for full details.',
+    modalObjectives: 'Objectives (where to do it):', modalRequires: 'Requires:',
+    doneTag: '(done)', notDoneTag: '(not done)', fullWikiPage: 'Full wiki page ↗',
+    markComplete: 'Mark Complete', markIncomplete: 'Mark Incomplete',
+    hideoutAnyLocation: 'Hideout / Any location',
+    toastMarkedComplete: 'Marked complete: ', toastMarkedIncomplete: 'Marked incomplete: ',
+    toastExpandedAll: 'Expanded all traders', toastCollapsedAll: 'Collapsed all traders',
+    toastExported: 'Progress exported', toastImported: 'Progress imported', toastReset: 'Progress reset',
+    confirmReset: 'Reset all quest progress? This cannot be undone.',
+    invalidFile: 'Invalid file: ',
+    statusLocked: 'Locked', statusCompleted: 'Completed', statusAvailable: 'Available',
+    spawnChance: '% spawn chance',
+    statPlayers: 'Players:', statRaidDuration: 'Raid duration:', statMinLevel: 'Min level:',
+    openOnTarkovDev: 'Open on tarkov.dev instead ↗',
+    bossSpawns: 'Boss Spawns', extractsLabel: 'Extracts', noBossSpawns: 'No known boss spawns.',
+    noExtractData: 'No extract data.', wikiPage: 'Wiki page ↗',
+    mapVisualNote: "Official labeled map from tarkov.dev — extracts and landmarks are already marked. Click and drag to pan, scroll the mouse wheel or use +/− to zoom.",
+    noMapImage: 'No map image available for this location yet — use the link above to view it on tarkov.dev.',
+    lastReportedLocation: 'Last Reported Location',
+    freshFresh: 'Likely still there', freshAging: 'May have moved', freshStale: 'Outdated - probably moved',
+    noGoonReports: 'No recent goon reports for this mode.',
+    squadParagraph: "The Goons (Knight, Big Pipe & Birdeye) roam as a squad between a fixed set of maps rather than spawning fresh each raid - reports above are community-submitted sightings, free via tarkov.dev's public API.",
+    mostTradedHeading: 'Most Traded Items Right Now', searchResultsFor: 'Search Results for',
+    noSellPriceData: 'No sell price data.', noItemsFound: 'No items found.', searching: 'Searching...',
+    searchFailed: 'Search failed: ', fleaFee: 'Flea fee:', activeListings: 'active listings',
+    fleaAvg: 'Flea (24h avg)', failedLoadItems: 'Failed to load items: ',
+    failedLoadQuests: 'Failed to load quest data: ',
+    failedLoadAmmo: 'Failed to load ammo data: ', failedLoadArmor: 'Failed to load armor data: ',
+    justNow: 'just now', lastUpdatedUnavailable: 'Last updated: unavailable',
+    langToggle: 'AR',
+  },
+  ar: {
+    discordJoin: 'انضم إلى ديسكورد',
+    navQuests: 'المهام', navLootMaps: 'خرائط الغنائم', navAmmo: 'الذخيرة', navArmor: 'الدروع',
+    navGoons: 'متعقب العصابة', navFlea: 'سوق البراغيث',
+    dayLabel: 'النهار:', nightLabel: 'الليل:',
+    searchQuestsPlaceholder: 'ابحث في المهام... (اضغط / للتركيز)',
+    allTraders: 'جميع التجار', allMaps: 'جميع الخرائط',
+    sortLevel: 'الترتيب: المستوى', sortName: 'الترتيب: الاسم', yourLevel: 'مستواك:',
+    filterAll: 'الكل', filterAvailable: 'متاح الآن', filterLocked: 'مقفل', filterDone: 'مكتمل',
+    expandAll: 'توسيع الكل', collapseAll: 'طي الكل',
+    exportBtn: 'تصدير', importBtn: 'استيراد', resetProgress: 'إعادة ضبط التقدم',
+    loadingQuests: '...جاري تحميل بيانات المهام من tarkov.dev',
+    searchAmmoPlaceholder: '...بحث في الذخيرة', refresh: '↻ تحديث',
+    loadingAmmo: '...جاري تحميل بيانات الذخيرة من tarkov.dev',
+    searchArmorPlaceholder: '...بحث في الدروع',
+    loadingArmor: '...جاري تحميل بيانات الدروع من tarkov.dev',
+    loadingGoons: '...جاري تحميل تقارير العصابة من tarkov.dev',
+    recentSightings: 'أحدث المشاهدات', squadSpawnMaps: 'الفرقة وخرائط الظهور',
+    searchFleaPlaceholder: '...بحث في العناصر (اكتب حرفين على الأقل)',
+    loadingFlea: '...جاري تحميل العناصر الأكثر تداولاً',
+    lastUpdatedPrefix: 'آخر تحديث: ',
+    footerNote: 'بيانات المهام والمواقع مصدرها',
+    footerNote2: '. يتم حفظ التقدم محليًا في متصفحك فقط. اضغط على أي بطاقة مهمة لرؤية كل التفاصيل.',
+    modalObjectives: 'الأهداف (أين تنفذها):', modalRequires: 'يتطلب:',
+    doneTag: '(منجز)', notDoneTag: '(غير منجز)', fullWikiPage: 'صفحة الويكي الكاملة ↗',
+    markComplete: 'وضع علامة كمكتمل', markIncomplete: 'إلغاء علامة الاكتمال',
+    hideoutAnyLocation: 'المخبأ / أي موقع',
+    toastMarkedComplete: 'تم وضع علامة كمكتمل: ', toastMarkedIncomplete: 'تم إلغاء علامة الاكتمال: ',
+    toastExpandedAll: 'تم توسيع كل التجار', toastCollapsedAll: 'تم طي كل التجار',
+    toastExported: 'تم تصدير التقدم', toastImported: 'تم استيراد التقدم', toastReset: 'تمت إعادة ضبط التقدم',
+    confirmReset: 'إعادة ضبط كل تقدم المهام؟ لا يمكن التراجع عن هذا الإجراء.',
+    invalidFile: 'ملف غير صالح: ',
+    statusLocked: 'مقفل', statusCompleted: 'مكتمل', statusAvailable: 'متاح',
+    spawnChance: '% فرصة الظهور',
+    statPlayers: 'اللاعبون:', statRaidDuration: 'مدة العملية:', statMinLevel: 'أقل مستوى:',
+    openOnTarkovDev: 'فتح على tarkov.dev بدلاً من ذلك ↗',
+    bossSpawns: 'ظهور الزعماء', extractsLabel: 'نقاط الخروج', noBossSpawns: 'لا توجد نقاط ظهور زعماء معروفة.',
+    noExtractData: 'لا توجد بيانات لنقاط الخروج.', wikiPage: 'صفحة الويكي ↗',
+    mapVisualNote: 'خريطة رسمية موضح عليها من tarkov.dev — نقاط الخروج والمعالم محددة مسبقًا. اضغط واسحب للتحريك، واستخدم عجلة الفأرة أو +/− للتكبير.',
+    noMapImage: 'لا توجد صورة خريطة متاحة لهذا الموقع بعد — استخدم الرابط أعلاه لعرضها على tarkov.dev.',
+    lastReportedLocation: 'آخر موقع مُبلغ عنه',
+    freshFresh: 'على الأرجح لا يزال هناك', freshAging: 'قد يكون انتقل', freshStale: 'قديم - على الأرجح انتقل',
+    noGoonReports: 'لا توجد تقارير حديثة عن العصابة لهذا النمط.',
+    squadParagraph: 'يتجول العصابة (Knight و Big Pipe و Birdeye) كفرقة بين مجموعة ثابتة من الخرائط بدلاً من الظهور من جديد في كل عملية — التقارير أعلاه هي مشاهدات أرسلها أفراد المجتمع، متوفرة مجانًا عبر واجهة tarkov.dev العامة.',
+    mostTradedHeading: 'العناصر الأكثر تداولاً الآن', searchResultsFor: 'نتائج البحث عن',
+    noSellPriceData: 'لا توجد بيانات سعر بيع.', noItemsFound: 'لم يتم العثور على أي عناصر.', searching: '...جاري البحث',
+    searchFailed: 'فشل البحث: ', fleaFee: 'رسوم البيع في السوق:', activeListings: 'عروض نشطة',
+    fleaAvg: 'متوسط السوق (24 ساعة)', failedLoadItems: 'فشل تحميل العناصر: ',
+    failedLoadQuests: 'فشل تحميل بيانات المهام: ',
+    failedLoadAmmo: 'فشل تحميل بيانات الذخيرة: ', failedLoadArmor: 'فشل تحميل بيانات الدروع: ',
+    justNow: 'الآن', lastUpdatedUnavailable: 'آخر تحديث: غير متوفر',
+    langToggle: 'EN',
+  },
+};
+let currentLang = localStorage.getItem('mohikovLang') || 'en';
+// Named "tr" (not "t") because the rest of this codebase already uses "t" as
+// the conventional parameter name for a quest/task object in many functions
+// (openModal(t), tasks.map(t => ...), etc.) - reusing "t" here would shadow
+// those and silently break, since a quest object isn't callable.
+function tr(key) { return (I18N[currentLang] && I18N[currentLang][key]) ?? I18N.en[key] ?? key; }
+
+function applyStaticTranslations() {
+  document.documentElement.lang = currentLang;
+  document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    el.textContent = tr(el.getAttribute('data-i18n'));
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    el.placeholder = tr(el.getAttribute('data-i18n-placeholder'));
+  });
+  const langBtn = document.getElementById('langToggleBtn');
+  if (langBtn) langBtn.textContent = tr('langToggle');
+}
+
+function setLanguage(lang) {
+  currentLang = lang;
+  localStorage.setItem('mohikovLang', lang);
+  applyStaticTranslations();
+  // Re-render whichever tab's dynamic content is currently built, so
+  // JS-generated text (status messages, cards, modal, etc.) picks up the
+  // new language too - data-i18n only covers the static markup.
+  if (typeof render === 'function' && tasks && tasks.length) render();
+  if (typeof renderMapInfo === 'function' && selectedMap) renderMapInfo();
+  if (typeof renderAmmoView === 'function' && ammoData && ammoData.length) renderAmmoView();
+  if (typeof renderArmorView === 'function' && armorData && armorData.length) renderArmorView();
+  if (typeof renderGoonsView === 'function' && lastGoonReports) renderGoonsView(lastGoonReports);
+  if (typeof fleaInitialized !== 'undefined' && fleaInitialized) {
+    const term = document.getElementById('fleaSearch').value.trim();
+    if (term.length >= 2) handleFleaSearchInput(); else showFleaDefaultList();
+  }
+}
+
 // In-game Tarkov time runs 7x faster than real time, with a UTC+3 offset
 // (00:00:00 in-game lands at unix 10,800,000ms, i.e. +3 hours - Russia).
 // Formula credit: Adam Burgess (https://github.com/adamburgess/tarkov-time),
@@ -768,6 +1016,23 @@ function updateTarkovGameTimeDisplay() {
 }
 updateTarkovGameTimeDisplay();
 setInterval(updateTarkovGameTimeDisplay, 1000);
+
+// Pulls the real last-commit timestamp from GitHub instead of a hand-typed
+// date, so it can't go stale/forgotten when an update is pushed.
+fetch('https://api.github.com/repos/Mohib86/mohikov/commits?per_page=1')
+  .then(res => res.json())
+  .then(commits => {
+    const el = document.getElementById('lastUpdatedFooter');
+    if (!el || !commits || !commits[0]) return;
+    const date = new Date(commits[0].commit.author.date);
+    el.textContent = tr('lastUpdatedPrefix') + date.toLocaleString(currentLang === 'ar' ? 'ar' : [], {
+      year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+    });
+  })
+  .catch(() => {
+    const el = document.getElementById('lastUpdatedFooter');
+    if (el) el.textContent = tr('lastUpdatedUnavailable');
+  });
 
 const STORAGE_KEY = 'tarkovCompletedQuests';
 const COLLAPSE_KEY = 'tarkovCollapsedTraders';
@@ -893,6 +1158,143 @@ async function loadGoonReports(gameMode) {
   return json.data.goonReports;
 }
 
+const FLEA_ITEM_FIELDS = `id name shortName iconLink avg24hPrice basePrice fleaMarketFee lastOfferCount
+    sellFor { price vendor { name } }`;
+
+let fleaGameMode = 'pve';
+
+async function searchFleaItems(name) {
+  const query = `{ items(name: ${JSON.stringify(name)}, gameMode: ${fleaGameMode}, limit: 30) { ${FLEA_ITEM_FIELDS} } }`;
+  const res = await fetch('https://api.tarkov.dev/graphql', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query })
+  });
+  const json = await res.json();
+  if (json.errors) throw new Error(JSON.stringify(json.errors));
+  return json.data.items;
+}
+
+// lastOfferCount = how many active flea listings an item currently has right
+// now - a real signal of how actively it's being traded, not a guessed stat.
+// Cached per game mode since PvP/PvE flea economies are genuinely separate
+// (prices differ noticeably between them).
+//
+// This used to fetch full details (icon, prices, sellFor arrays) for all
+// ~5000 items just to rank them and keep the top 30 - a ~2MB request every
+// time the cache missed, which is what made this slow to load. Fixed by
+// splitting into two passes: first a minimal id+lastOfferCount-only query
+// (~270KB) to find the top 30 ids, then one small query for full details on
+// just those 30.
+const fleaTopItemsCache = { regular: null, pve: null };
+async function loadTopFleaItems() {
+  if (fleaTopItemsCache[fleaGameMode]) return fleaTopItemsCache[fleaGameMode];
+
+  const rankQuery = `{ items(gameMode: ${fleaGameMode}, limit: 5044) { id lastOfferCount } }`;
+  const rankRes = await fetch('https://api.tarkov.dev/graphql', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query: rankQuery })
+  });
+  const rankJson = await rankRes.json();
+  if (rankJson.errors) throw new Error(JSON.stringify(rankJson.errors));
+  const topIds = rankJson.data.items
+    .filter(i => i.lastOfferCount)
+    .sort((a, b) => b.lastOfferCount - a.lastOfferCount)
+    .slice(0, 30)
+    .map(i => i.id);
+
+  const detailQuery = `{ items(ids: ${JSON.stringify(topIds)}, gameMode: ${fleaGameMode}) { ${FLEA_ITEM_FIELDS} } }`;
+  const detailRes = await fetch('https://api.tarkov.dev/graphql', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query: detailQuery })
+  });
+  const detailJson = await detailRes.json();
+  if (detailJson.errors) throw new Error(JSON.stringify(detailJson.errors));
+  // The ids query doesn't preserve order, so re-sort to match the ranking.
+  const byId = Object.fromEntries(detailJson.data.items.map(i => [i.id, i]));
+  fleaTopItemsCache[fleaGameMode] = topIds.map(id => byId[id]).filter(Boolean);
+  return fleaTopItemsCache[fleaGameMode];
+}
+
+function fleaItemCardHtml(item) {
+  const rows = (item.sellFor || []).map(s => ({ vendor: s.vendor.name, price: s.price }));
+  if (item.avg24hPrice) rows.push({ vendor: tr('fleaAvg'), price: item.avg24hPrice });
+  rows.sort((a, b) => b.price - a.price);
+  const bestPrice = rows.length ? rows[0].price : null;
+
+  const priceRowsHtml = rows.length
+    ? rows.map(r => `
+        <div class="flea-price-row ${r.price === bestPrice ? 'best' : ''}">
+          <span class="vendor">${r.vendor}</span>
+          <span class="price">${r.price.toLocaleString()}&#8381;</span>
+        </div>`).join('')
+    : `<div style="color:var(--muted);font-size:12px;">${tr('noSellPriceData')}</div>`;
+
+  return `
+    <div class="ref-card flea-card">
+      <img class="ref-icon" src="${item.iconLink}" alt="${item.name}" loading="lazy">
+      <div class="ref-card-body">
+        <div class="ref-card-name">${item.name}</div>
+        <div class="flea-price-rows">${priceRowsHtml}</div>
+        ${item.fleaMarketFee ? `<div class="flea-fee">${tr('fleaFee')} ${item.fleaMarketFee.toLocaleString()}&#8381;</div>` : ''}
+        ${item.lastOfferCount ? `<div class="flea-fee">${item.lastOfferCount.toLocaleString()} ${tr('activeListings')}</div>` : ''}
+      </div>
+    </div>
+  `;
+}
+
+async function showFleaDefaultList() {
+  const status = document.getElementById('fleaStatus');
+  const list = document.getElementById('fleaList');
+  status.style.display = 'block';
+  status.innerHTML = `<div class="spinner"></div>${tr('loadingFlea')}`;
+  list.innerHTML = '';
+  try {
+    const items = await loadTopFleaItems();
+    status.style.display = 'none';
+    document.getElementById('fleaListHeading').textContent = tr('mostTradedHeading');
+    list.innerHTML = items.map(fleaItemCardHtml).join('');
+    document.getElementById('fleaUpdated').textContent = `${tr('lastUpdatedPrefix')}${formatUpdatedTime()}`;
+  } catch (err) {
+    status.innerHTML = tr('failedLoadItems') + err.message;
+  }
+}
+
+let fleaSearchTimer = null;
+function handleFleaSearchInput() {
+  clearTimeout(fleaSearchTimer);
+  const term = document.getElementById('fleaSearch').value.trim();
+  const status = document.getElementById('fleaStatus');
+  const list = document.getElementById('fleaList');
+
+  if (term.length < 2) {
+    showFleaDefaultList();
+    return;
+  }
+
+  status.style.display = 'block';
+  status.innerHTML = `<div class="spinner"></div>${tr('searching')}`;
+  list.innerHTML = '';
+
+  fleaSearchTimer = setTimeout(async () => {
+    try {
+      const items = await searchFleaItems(term);
+      if (items.length === 0) {
+        status.innerHTML = tr('noItemsFound');
+        return;
+      }
+      status.style.display = 'none';
+      document.getElementById('fleaListHeading').textContent = `${tr('searchResultsFor')} "${term}"`;
+      list.innerHTML = items.map(fleaItemCardHtml).join('');
+      document.getElementById('fleaUpdated').textContent = `${tr('lastUpdatedPrefix')}${formatUpdatedTime()}`;
+    } catch (err) {
+      status.innerHTML = tr('searchFailed') + err.message;
+    }
+  }, 350);
+}
+
 // Known maps the Goons squad (Knight, Big Pipe, Birdeye) can roam to, with
 // spawn chance pulled from the same maps() boss data used in Loot Maps.
 const GOON_SQUAD_MAPS = [
@@ -902,9 +1304,31 @@ const GOON_SQUAD_MAPS = [
   { map: 'Shoreline', chance: 0.3 },
 ];
 
+// Arabic noun counting needs real grammatical agreement (singular/dual/
+// plural forms differ - "5 minutes" and "15 minutes" use different noun
+// forms), unlike English where only the number changes. A simple string
+// substitution would produce ungrammatical Arabic, so this branches properly.
+function arabicCount(n, singular, dual, pluralWord, singularAfter11) {
+  if (n === 1) return singular;
+  if (n === 2) return dual;
+  if (n >= 3 && n <= 10) return `${n} ${pluralWord}`;
+  return `${n} ${singularAfter11}`;
+}
+
 function timeAgoText(ms) {
   const mins = Math.floor(ms / 60000);
-  if (mins < 1) return 'just now';
+  if (mins < 1) return tr('justNow');
+
+  if (currentLang === 'ar') {
+    if (mins < 60) return `منذ ${arabicCount(mins, 'دقيقة واحدة', 'دقيقتان', 'دقائق', 'دقيقة')}`;
+    const hrs = Math.floor(mins / 60);
+    const remMins = mins % 60;
+    const hoursText = arabicCount(hrs, 'ساعة واحدة', 'ساعتان', 'ساعات', 'ساعة');
+    if (remMins === 0) return `منذ ${hoursText}`;
+    const minsText = arabicCount(remMins, 'دقيقة واحدة', 'دقيقتان', 'دقائق', 'دقيقة');
+    return `منذ ${hoursText} و${minsText}`;
+  }
+
   if (mins < 60) return `${mins} min ago`;
   const hrs = Math.floor(mins / 60);
   const remMins = mins % 60;
@@ -919,7 +1343,7 @@ function freshnessClass(ms) {
 }
 
 function freshnessLabel(cls) {
-  return cls === 'fresh' ? 'Likely still there' : cls === 'aging' ? 'May have moved' : 'Outdated - probably moved';
+  return cls === 'fresh' ? tr('freshFresh') : cls === 'aging' ? tr('freshAging') : tr('freshStale');
 }
 
 function renderGoonsView(reports) {
@@ -927,7 +1351,7 @@ function renderGoonsView(reports) {
   const content = document.getElementById('goonsContent');
   const status = document.getElementById('goonsStatus');
   if (!reports || reports.length === 0) {
-    status.innerHTML = 'No recent goon reports for this mode.';
+    status.innerHTML = tr('noGoonReports');
     status.style.display = 'block';
     content.style.display = 'none';
     return;
@@ -941,7 +1365,7 @@ function renderGoonsView(reports) {
   const cls = freshnessClass(latestMs);
 
   document.getElementById('goonsLastCard').innerHTML = `
-    <div class="label">Last Reported Location</div>
+    <div class="label">${tr('lastReportedLocation')}</div>
     <div class="map-name">${latest.map.name}</div>
     <div class="time-ago">${timeAgoText(latestMs)}</div>
     <div class="freshness ${cls}">${freshnessLabel(cls)}</div>
@@ -953,7 +1377,7 @@ function renderGoonsView(reports) {
   }).join('');
 
   document.getElementById('goonsSquadInfo').innerHTML = `
-    <p>The Goons (Knight, Big Pipe &amp; Birdeye) roam as a squad between a fixed set of maps rather than spawning fresh each raid - reports above are community-submitted sightings, free via tarkov.dev's public API.</p>
+    <p>${tr('squadParagraph')}</p>
     <div class="squad-maps">
       ${GOON_SQUAD_MAPS.map(g => `<span class="ref-stat">${g.map} <b>${Math.round(g.chance * 100)}%</b></span>`).join('')}
     </div>
@@ -966,7 +1390,7 @@ async function refreshGoons() {
   try {
     const reports = await loadGoonReports(goonsGameMode);
     renderGoonsView(reports);
-    document.getElementById('goonsUpdated').textContent = `Updated ${formatUpdatedTime()}`;
+    document.getElementById('goonsUpdated').textContent = `${tr('lastUpdatedPrefix')}${formatUpdatedTime()}`;
   } catch (err) {
     document.getElementById('goonsStatus').innerHTML = 'Failed to load goon reports: ' + err.message;
     document.getElementById('goonsStatus').style.display = 'block';
@@ -1105,7 +1529,7 @@ function questLocations(task) {
 }
 
 function statusLabel(status) {
-  return status === 'locked' ? 'Locked' : status === 'completed' ? 'Completed' : 'Available';
+  return status === 'locked' ? tr('statusLocked') : status === 'completed' ? tr('statusCompleted') : tr('statusAvailable');
 }
 
 function render() {
@@ -1181,9 +1605,9 @@ function render() {
   document.getElementById('progress').firstChild.textContent = `${done} / ${total} `;
   document.getElementById('progressBarInner').style.width = total ? `${(done / total * 100).toFixed(1)}%` : '0%';
 
-  document.getElementById('filterAvailable').textContent = `Available Now (${tasks.filter(t => questStatus(t) === 'available').length})`;
-  document.getElementById('filterLocked').textContent = `Locked (${tasks.filter(t => questStatus(t) === 'locked').length})`;
-  document.getElementById('filterDone').textContent = `Completed (${done})`;
+  document.getElementById('filterAvailable').textContent = `${tr('filterAvailable')} (${tasks.filter(t => questStatus(t) === 'available').length})`;
+  document.getElementById('filterLocked').textContent = `${tr('filterLocked')} (${tasks.filter(t => questStatus(t) === 'locked').length})`;
+  document.getElementById('filterDone').textContent = `${tr('filterDone')} (${done})`;
 }
 
 function renderQuestCard(t) {
@@ -1224,8 +1648,8 @@ function renderQuestCard(t) {
 }
 
 function toggleComplete(task, isComplete) {
-  if (isComplete) { completed.add(task.id); showToast(`Marked complete: ${task.name}`); playCompleteSound(); }
-  else { completed.delete(task.id); showToast(`Marked incomplete: ${task.name}`); }
+  if (isComplete) { completed.add(task.id); showToast(`${tr('toastMarkedComplete')}${task.name}`); playCompleteSound(); }
+  else { completed.delete(task.id); showToast(`${tr('toastMarkedIncomplete')}${task.name}`); }
   saveCompleted();
   render();
 }
@@ -1272,27 +1696,27 @@ function openModal(t) {
     </div>`;
 
   if (t.objectives.length) {
-    html += '<strong>Objectives (where to do it):</strong><ul>' + t.objectives.map(o => {
+    html += `<strong>${tr('modalObjectives')}</strong><ul>` + t.objectives.map(o => {
       const objMaps = (o.maps || []).map(m => m.name);
       const locTag = objMaps.length
         ? objMaps.map(m => `<span class="obj-loc" data-map="${m}">${m}</span>`).join('')
-        : '<span class="obj-loc" style="cursor:default;">Hideout / Any location</span>';
+        : `<span class="obj-loc" style="cursor:default;">${tr('hideoutAnyLocation')}</span>`;
       return `<li>${o.description} ${locTag}</li>`;
     }).join('') + '</ul>';
   }
 
   if (t.taskRequirements.length) {
-    html += '<strong>Requires:</strong><ul>' + t.taskRequirements.map(r => {
+    html += `<strong>${tr('modalRequires')}</strong><ul>` + t.taskRequirements.map(r => {
       const met = completed.has(r.task.id);
-      return `<li class="${met ? 'prereq-met' : 'prereq-unmet'}">${r.task.name} ${met ? '(done)' : '(not done)'}</li>`;
+      return `<li class="${met ? 'prereq-met' : 'prereq-unmet'}">${r.task.name} ${met ? tr('doneTag') : tr('notDoneTag')}</li>`;
     }).join('') + '</ul>';
   }
 
   if (t.wikiLink) {
-    html += `<div style="margin-bottom:14px;"><a href="${t.wikiLink}" target="_blank">Full wiki page &#8599;</a></div>`;
+    html += `<div style="margin-bottom:14px;"><a href="${t.wikiLink}" target="_blank">${tr('fullWikiPage')}</a></div>`;
   }
 
-  html += `<button class="modal-complete-btn" id="modalToggleBtn">${completed.has(t.id) ? 'Mark Incomplete' : 'Mark Complete'}</button>`;
+  html += `<button class="modal-complete-btn" id="modalToggleBtn">${completed.has(t.id) ? tr('markIncomplete') : tr('markComplete')}</button>`;
 
   content.innerHTML = html;
 
@@ -1363,13 +1787,13 @@ document.getElementById('expandAllBtn').addEventListener('click', () => {
   collapsedTraders.clear();
   saveCollapsed();
   render();
-  showToast('Expanded all traders');
+  showToast(tr('toastExpandedAll'));
 });
 document.getElementById('collapseAllBtn').addEventListener('click', () => {
   tasks.forEach(t => collapsedTraders.add(t.trader.name));
   saveCollapsed();
   render();
-  showToast('Collapsed all traders');
+  showToast(tr('toastCollapsedAll'));
 });
 
 document.getElementById('exportBtn').addEventListener('click', () => {
@@ -1380,7 +1804,7 @@ document.getElementById('exportBtn').addEventListener('click', () => {
   a.download = 'tarkov-quest-progress.json';
   a.click();
   URL.revokeObjectURL(url);
-  showToast('Progress exported');
+  showToast(tr('toastExported'));
 });
 
 document.getElementById('importBtn').addEventListener('click', () => {
@@ -1396,20 +1820,20 @@ document.getElementById('importFile').addEventListener('change', e => {
       completed = new Set(ids);
       saveCompleted();
       render();
-      showToast('Progress imported');
+      showToast(tr('toastImported'));
     } catch (err) {
-      alert('Invalid file: ' + err.message);
+      alert(tr('invalidFile') + err.message);
     }
   };
   reader.readAsText(file);
 });
 
 document.getElementById('clearBtn').addEventListener('click', () => {
-  if (confirm('Reset all quest progress? This cannot be undone.')) {
+  if (confirm(tr('confirmReset'))) {
     completed = new Set();
     saveCompleted();
     render();
-    showToast('Progress reset');
+    showToast(tr('toastReset'));
   }
 });
 
@@ -1420,11 +1844,16 @@ document.addEventListener('keydown', e => {
   }
 });
 
+document.getElementById('langToggleBtn').addEventListener('click', () => {
+  setLanguage(currentLang === 'ar' ? 'en' : 'ar');
+});
+applyStaticTranslations();
+
 // ---- Loot Maps tab ----
 let maps = [];
 let selectedMap = null;
 
-const NAV_TABS = ['Quests', 'LootMaps', 'Ammo', 'Armor', 'Goons'];
+const NAV_TABS = ['Quests', 'LootMaps', 'Ammo', 'Armor', 'Goons', 'Flea'];
 function switchTab(active) {
   NAV_TABS.forEach(name => {
     document.getElementById('nav' + name).classList.toggle('active', name === active);
@@ -1435,6 +1864,7 @@ function switchTab(active) {
   document.getElementById('ammoView').style.display = active === 'Ammo' ? 'block' : 'none';
   document.getElementById('armorView').style.display = active === 'Armor' ? 'block' : 'none';
   document.getElementById('goonsView').style.display = active === 'Goons' ? 'block' : 'none';
+  document.getElementById('fleaView').style.display = active === 'Flea' ? 'block' : 'none';
   if (active === 'LootMaps') fitMapToBox();
 }
 document.getElementById('navQuests').addEventListener('click', () => switchTab('Quests'));
@@ -1442,6 +1872,58 @@ document.getElementById('navLootMaps').addEventListener('click', () => switchTab
 document.getElementById('navAmmo').addEventListener('click', () => switchTab('Ammo'));
 document.getElementById('navArmor').addEventListener('click', () => switchTab('Armor'));
 document.getElementById('navGoons').addEventListener('click', () => switchTab('Goons'));
+let fleaInitialized = false;
+document.getElementById('navFlea').addEventListener('click', () => {
+  switchTab('Flea');
+  if (!fleaInitialized) {
+    fleaInitialized = true;
+    showFleaDefaultList();
+  }
+});
+
+function setFleaGameMode(mode) {
+  fleaGameMode = mode;
+  document.getElementById('fleaModeRegular').classList.toggle('active', mode === 'regular');
+  document.getElementById('fleaModePve').classList.toggle('active', mode === 'pve');
+  // Re-run whatever's currently showing (search results or the default list) under the new mode.
+  const term = document.getElementById('fleaSearch').value.trim();
+  if (term.length >= 2) handleFleaSearchInput();
+  else showFleaDefaultList();
+}
+document.getElementById('fleaModeRegular').addEventListener('click', () => setFleaGameMode('regular'));
+document.getElementById('fleaModePve').addEventListener('click', () => setFleaGameMode('pve'));
+document.getElementById('fleaSearch').addEventListener('input', handleFleaSearchInput);
+
+// Spam guard: once a refresh runs (button click or the auto-timer), ignore
+// any further refresh requests - manual or automatic - until this cooldown
+// elapses, so rapid clicking can't hammer the API with overlapping requests.
+const FLEA_REFRESH_COOLDOWN_MS = 5000;
+let fleaRefreshCooldownUntil = 0;
+
+async function refreshFlea() {
+  if (!fleaInitialized) return;
+  if (Date.now() < fleaRefreshCooldownUntil) return;
+  fleaRefreshCooldownUntil = Date.now() + FLEA_REFRESH_COOLDOWN_MS;
+
+  const btn = document.getElementById('fleaRefreshBtn');
+  if (btn) btn.disabled = true;
+  const term = document.getElementById('fleaSearch').value.trim();
+  if (term.length >= 2) {
+    await searchFleaItems(term).then(items => {
+      document.getElementById('fleaList').innerHTML = items.map(fleaItemCardHtml).join('');
+      document.getElementById('fleaUpdated').textContent = `${tr('lastUpdatedPrefix')}${formatUpdatedTime()}`;
+    }).catch(() => {});
+  } else {
+    fleaTopItemsCache[fleaGameMode] = null;
+    await showFleaDefaultList();
+  }
+  if (btn) {
+    const remaining = Math.max(0, fleaRefreshCooldownUntil - Date.now());
+    setTimeout(() => { btn.disabled = false; }, remaining);
+  }
+}
+document.getElementById('fleaRefreshBtn').addEventListener('click', refreshFlea);
+setInterval(refreshFlea, 60 * 1000);
 
 function renderMapTabs() {
   const tabsEl = document.getElementById('mapTabs');
@@ -1571,7 +2053,7 @@ function resetMapView() {
 function renderMapVisual(m) {
   const img = MAP_IMAGES[m.normalizedName];
   if (!img) {
-    return `<div class="map-visual-note">No map image available for this location yet — use the link above to view it on tarkov.dev.</div>`;
+    return `<div class="map-visual-note">${tr('noMapImage')}</div>`;
   }
   return `
     <div class="map-visual-wrap" id="mapVisualWrap">
@@ -1584,7 +2066,7 @@ function renderMapVisual(m) {
         <img class="base-map" src="https://raw.githubusercontent.com/the-hideout/tarkov-dev/main/public/maps/${img}" alt="${m.name} map" onload="onMapImageLoaded(this);">
       </div>
     </div>
-    <div class="map-visual-note">Official labeled map from tarkov.dev — extracts and landmarks are already marked. Click and drag to pan, scroll the mouse wheel or use +/&minus; to zoom.</div>
+    <div class="map-visual-note">${tr('mapVisualNote')}</div>
   `;
 }
 
@@ -1599,35 +2081,35 @@ function renderMapInfo() {
   baseMapH = MAP_IMAGE_RENDER_WIDTH;
 
   const bossesHtml = (m.bosses || []).length
-    ? m.bosses.map(b => `<div class="boss-row"><span>${b.name}</span><span>${Math.round((b.spawnChance || 0) * 100)}% spawn chance</span></div>`).join('')
-    : '<div style="color:var(--muted);font-size:13px;">No known boss spawns.</div>';
+    ? m.bosses.map(b => `<div class="boss-row"><span>${b.name}</span><span>${Math.round((b.spawnChance || 0) * 100)}${tr('spawnChance')}</span></div>`).join('')
+    : `<div style="color:var(--muted);font-size:13px;">${tr('noBossSpawns')}</div>`;
 
   const factionClass = f => f === 'pmc' ? 'faction-pmc' : f === 'scav' ? 'faction-scav' : 'faction-shared';
   const extractsHtml = (m.extracts || []).length
     ? m.extracts.map(e => `<div class="extract-row"><span>${e.name}</span><span class="badge ${factionClass(e.faction)}">${e.faction}</span></div>`).join('')
-    : '<div style="color:var(--muted);font-size:13px;">No extract data.</div>';
+    : `<div style="color:var(--muted);font-size:13px;">${tr('noExtractData')}</div>`;
 
   container.innerHTML = `
     <div class="map-info-card">
       <h2>${m.name}</h2>
       <div class="map-info-stats">
-        <span>Players: <b>${m.players || '?'}</b></span>
-        <span>Raid duration: <b>${m.raidDuration || '?'} min</b></span>
-        <span>Min level: <b>${m.minPlayerLevel || 1}</b></span>
+        <span>${tr('statPlayers')} <b>${m.players || '?'}</b></span>
+        <span>${tr('statRaidDuration')} <b>${m.raidDuration || '?'} min</b></span>
+        <span>${tr('statMinLevel')} <b>${m.minPlayerLevel || 1}</b></span>
       </div>
       ${renderMapVisual(m)}
-      <a class="map-open-btn" href="https://tarkov.dev/map/${m.normalizedName}" target="_blank">Open on tarkov.dev instead &#8599;</a>
+      <a class="map-open-btn" href="https://tarkov.dev/map/${m.normalizedName}" target="_blank">${tr('openOnTarkovDev')}</a>
       <div class="map-sections">
         <div>
-          <h3>Boss Spawns</h3>
+          <h3>${tr('bossSpawns')}</h3>
           ${bossesHtml}
         </div>
         <div>
-          <h3>Extracts (${(m.extracts || []).length})</h3>
+          <h3>${tr('extractsLabel')} (${(m.extracts || []).length})</h3>
           ${extractsHtml}
         </div>
       </div>
-      ${m.wiki ? `<div style="margin-top:16px;"><a href="${m.wiki}" target="_blank">Wiki page &#8599;</a></div>` : ''}
+      ${m.wiki ? `<div style="margin-top:16px;"><a href="${m.wiki}" target="_blank">${tr('wikiPage')}</a></div>` : ''}
     </div>
   `;
 
@@ -1702,9 +2184,9 @@ async function refreshAmmo() {
     ammoData = await loadAmmo();
     document.getElementById('ammoStatus').style.display = 'none';
     renderAmmoView();
-    document.getElementById('ammoUpdated').textContent = `Updated ${formatUpdatedTime()}`;
+    document.getElementById('ammoUpdated').textContent = `${tr('lastUpdatedPrefix')}${formatUpdatedTime()}`;
   } catch (err) {
-    document.getElementById('ammoStatus').innerHTML = 'Failed to load ammo data: ' + err.message;
+    document.getElementById('ammoStatus').innerHTML = tr('failedLoadAmmo') + err.message;
   } finally {
     if (btn) btn.disabled = false;
   }
@@ -1717,9 +2199,9 @@ async function refreshArmor() {
     armorData = await loadArmor();
     document.getElementById('armorStatus').style.display = 'none';
     renderArmorView();
-    document.getElementById('armorUpdated').textContent = `Updated ${formatUpdatedTime()}`;
+    document.getElementById('armorUpdated').textContent = `${tr('lastUpdatedPrefix')}${formatUpdatedTime()}`;
   } catch (err) {
-    document.getElementById('armorStatus').innerHTML = 'Failed to load armor data: ' + err.message;
+    document.getElementById('armorStatus').innerHTML = tr('failedLoadArmor') + err.message;
   } finally {
     if (btn) btn.disabled = false;
   }
@@ -1769,7 +2251,7 @@ Promise.all([loadTasks(), loadTraderImages()]).then(([taskData, images]) => {
   populateFilters();
   render();
 }).catch(err => {
-  document.getElementById('status').innerHTML = 'Failed to load quest data: ' + err.message;
+  document.getElementById('status').innerHTML = tr('failedLoadQuests') + err.message;
 });
 </script>
 
