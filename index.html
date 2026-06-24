@@ -2,7 +2,19 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Tarkov Quest Tracker</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Escape from Tarkov - MohiKov</title>
+<meta name="description" content="All information you need for Escape from Tarkov - quest tracker, loot maps, ammo &amp; armor reference, and a live Goons tracker.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://mohib86.github.io/mohikov/">
+<meta property="og:site_name" content="Escape from Tarkov - MohiKov">
+<meta property="og:title" content="Escape from Tarkov - MohiKov">
+<meta property="og:description" content="All information you need for Escape from Tarkov - quest tracker, loot maps, ammo &amp; armor reference, and a live Goons tracker.">
+<meta property="og:image" content="https://mohib86.github.io/mohikov/og-banner.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#c79b3b">
 <style>
   :root {
     --bg: #14161a;
@@ -694,13 +706,50 @@
     font-size: 11.5px;
     padding: 6px 2px 14px;
   }
+
+  /* Mobile: the Discord/language buttons are position:absolute pinned to
+     the corners, which doesn't reserve any layout space - on a narrow phone
+     screen they overlapped the centered title instead of just sitting
+     beside it like on desktop. Below this width, stack everything in a
+     normal flexbox column instead of absolute-positioning over the title. */
+  @media (max-width: 700px) {
+    header { padding: 10px 12px; }
+    header h1 { font-size: 20px; }
+    .discord-join-btn, .lang-toggle-btn {
+      position: static;
+      display: inline-flex;
+      font-size: 12px;
+      padding: 6px 12px;
+      margin: 0 4px 8px;
+    }
+    .header-top-row {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    #tarkovGameTime { font-size: 12px; gap: 12px; flex-wrap: wrap; }
+    .top-tabs { flex-wrap: wrap; }
+    .top-tabs button { font-size: 12px; padding: 6px 10px; }
+    .controls, .ref-controls { gap: 6px; }
+    .controls input, .controls select, .controls button,
+    .ref-controls input, .ref-controls select, .ref-controls button {
+      font-size: 12px;
+      padding: 5px 8px;
+    }
+    .quest-card, .flea-card { width: 200px; }
+    .trader-quests { grid-auto-columns: 200px; }
+    .map-visual-wrap { height: 420px; }
+    .ref-items { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+  }
 </style>
 </head>
 <body>
 
 <header>
-  <button id="langToggleBtn" class="lang-toggle-btn">AR</button>
-  <a class="discord-join-btn" href="https://discord.gg/gamers-community" target="_blank" rel="noopener noreferrer">&#128172; <span data-i18n="discordJoin">Join our Discord</span></a>
+  <div class="header-top-row">
+    <button id="langToggleBtn" class="lang-toggle-btn">AR</button>
+    <a class="discord-join-btn" href="https://discord.gg/gamers-community" target="_blank" rel="noopener noreferrer">&#128172; <span data-i18n="discordJoin">Join our Discord</span></a>
+  </div>
   <h1>Escape from Tarkov - MohiKov</h1>
   <div id="tarkovGameTime">
     <span>&#9728;&#65039; <span data-i18n="dayLabel">Day:</span> <span id="tarkovGameTimeDay">--:--:--</span></span>
@@ -811,7 +860,7 @@
   </div>
 </div>
 
-<footer><span data-i18n="footerNote">Quest and location data from</span> <a href="https://tarkov.dev" target="_blank">tarkov.dev</a><span data-i18n="footerNote2">. Progress is saved locally in your browser only. Click any quest card for full details.</span><br><span class="footer-credit-en" style="color: var(--accent); font-size: 20px; font-weight: 700;">Made by Mohi, the one and only Tarkov OG.</span><br><span style="color: var(--muted); font-size: 11px;">Ver 0.95420 &middot; <span id="lastUpdatedFooter">Last updated: checking...</span></span></footer>
+<footer><span data-i18n="footerNote">Quest and location data from</span> <a href="https://tarkov.dev" target="_blank">tarkov.dev</a><span data-i18n="footerNote2">. Progress is saved locally in your browser only. Click any quest card for full details.</span><br><span class="footer-credit-en" style="color: var(--accent); font-size: 20px; font-weight: 700;">Made by Mohi, the one and only Tarkov OG.</span><br><span style="color: var(--muted); font-size: 11px;">Ver 0.96420 &middot; <span id="lastUpdatedFooter">Last updated: checking...</span></span></footer>
 <div id="toast"></div>
 
 <div id="modalOverlay">
@@ -2158,6 +2207,38 @@ document.addEventListener('mouseleave', () => {
 });
 document.addEventListener('dragstart', e => {
   if (e.target.closest('#mapVisualWrap')) e.preventDefault();
+});
+
+// Touch equivalents of the mouse drag handlers above - mobile browsers don't
+// reliably synthesize mouse events from touch anymore, so drag-to-pan the
+// map didn't work at all on a phone without these.
+document.addEventListener('touchstart', e => {
+  const wrap = e.target.closest('#mapVisualWrap');
+  if (!wrap) return;
+  const touch = e.touches[0];
+  mapDragState = {
+    wrap,
+    startX: touch.pageX,
+    startY: touch.pageY,
+    startPanX: panX,
+    startPanY: panY,
+  };
+  wrap.classList.add('dragging');
+}, { passive: true });
+document.addEventListener('touchmove', e => {
+  if (!mapDragState) return;
+  e.preventDefault();
+  const touch = e.touches[0];
+  const { startX, startY, startPanX, startPanY } = mapDragState;
+  panX = startPanX + (touch.pageX - startX);
+  panY = startPanY + (touch.pageY - startY);
+  clampPan();
+  applyMapTransform();
+}, { passive: false });
+document.addEventListener('touchend', () => {
+  if (!mapDragState) return;
+  mapDragState.wrap.classList.remove('dragging');
+  mapDragState = null;
 });
 document.addEventListener('wheel', e => {
   if (!e.target.closest('#mapVisualWrap')) return;
