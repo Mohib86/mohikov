@@ -144,7 +144,6 @@
     border-color: var(--accent);
   }
   #progress {
-    margin-left: auto;
     color: var(--muted);
     font-size: 13px;
     white-space: nowrap;
@@ -1025,17 +1024,23 @@
     <button id="filterAvailable" data-i18n="filterAvailable">Available Now</button>
     <button id="filterLocked" data-i18n="filterLocked">Locked</button>
     <button id="filterDone" data-i18n="filterDone">Completed</button>
-    <label id="hideCompletedLabel" style="font-size:13px;color:var(--muted);display:inline-flex;align-items:center;gap:5px;cursor:pointer;user-select:none;">
-      <input type="checkbox" id="hideCompletedCb" style="accent-color:var(--accent);width:14px;height:14px;cursor:pointer;">
-      <span data-i18n="hideCompleted">Hide Completed</span>
-    </label>
     <button id="expandAllBtn" data-i18n="expandAll">Expand All</button>
     <button id="collapseAllBtn" data-i18n="collapseAll">Collapse All</button>
     <button id="exportBtn" data-i18n="exportBtn">Export</button>
     <button id="importBtn" data-i18n="importBtn">Import</button>
     <button id="clearBtn" data-i18n="resetProgress">Reset Progress</button>
     <input id="importFile" type="file" accept="application/json" style="display:none;">
-    <span id="progress">0 / 0<span id="progressBarOuter"><span id="progressBarInner"></span></span></span>
+    <span id="questViewRight" style="margin-left:auto;display:inline-flex;align-items:center;gap:14px;flex-shrink:0;">
+      <label style="font-size:13px;color:var(--muted);display:inline-flex;align-items:center;gap:5px;cursor:pointer;user-select:none;white-space:nowrap;">
+        <input type="checkbox" id="showCompletedCb" style="accent-color:var(--accent);width:14px;height:14px;cursor:pointer;">
+        <span data-i18n="showCompleted">Show Completed</span>
+      </label>
+      <label style="font-size:13px;color:var(--muted);display:inline-flex;align-items:center;gap:5px;cursor:pointer;user-select:none;white-space:nowrap;">
+        <input type="checkbox" id="showLockedCb" style="accent-color:var(--accent);width:14px;height:14px;cursor:pointer;">
+        <span data-i18n="showLocked">Show Locked</span>
+      </label>
+      <span id="progress">0 / 0<span id="progressBarOuter"><span id="progressBarInner"></span></span></span>
+    </span>
   </div>
 </header>
 
@@ -1116,7 +1121,7 @@
   </div>
 </div>
 
-<footer><span data-i18n="footerNote">Quest and location data from</span> <a href="https://tarkov.dev" target="_blank">tarkov.dev</a><span data-i18n="footerNote2">. Progress is saved locally in your browser only. Click any quest card for full details.</span><br><span class="footer-credit-en" style="color: var(--accent); font-size: 20px; font-weight: 700;">Made by Mohi, the one and only Tarkov OG.</span><br><span style="color: var(--muted); font-size: 11px;">Ver 0.99501 &middot; <span id="lastUpdatedFooter">Last updated: checking...</span></span></footer>
+<footer><span data-i18n="footerNote">Quest and location data from</span> <a href="https://tarkov.dev" target="_blank">tarkov.dev</a><span data-i18n="footerNote2">. Progress is saved locally in your browser only. Click any quest card for full details.</span><br><span class="footer-credit-en" style="color: var(--accent); font-size: 20px; font-weight: 700;">Made by Mohi, the one and only Tarkov OG.</span><br><span style="color: var(--muted); font-size: 11px;">Ver 0.99600 &middot; <span id="lastUpdatedFooter">Last updated: checking...</span></span></footer>
 <div id="toast"></div>
 
 <div id="modalOverlay">
@@ -1158,7 +1163,8 @@ const I18N = {
     searchQuestsPlaceholder: 'Search quests... (press / to focus)',
     allTraders: 'All Traders', allMaps: 'All Maps',
     sortLevel: 'Sort: Level', sortName: 'Sort: Name', yourLevel: 'Your level:',
-    filterAll: 'All', filterAvailable: 'Available Now', filterLocked: 'Locked', filterDone: 'Completed', hideCompleted: 'Hide Completed',
+    filterAll: 'All', filterAvailable: 'Available Now', filterLocked: 'Locked', filterDone: 'Completed',
+    showCompleted: 'Show Completed', showLocked: 'Show Locked',
     expandAll: 'Expand All', collapseAll: 'Collapse All',
     exportBtn: 'Export', importBtn: 'Import', resetProgress: 'Reset Progress',
     loadingQuests: 'Loading quest data from tarkov.dev...',
@@ -1214,7 +1220,8 @@ const I18N = {
     searchQuestsPlaceholder: 'ابحث في المهام... (اضغط / للتركيز)',
     allTraders: 'جميع التجار', allMaps: 'جميع الخرائط',
     sortLevel: 'الترتيب: المستوى', sortName: 'الترتيب: الاسم', yourLevel: 'مستواك:',
-    filterAll: 'الكل', filterAvailable: 'متاح الآن', filterLocked: 'مقفل', filterDone: 'مكتمل', hideCompleted: 'إخفاء المكتملة',
+    filterAll: 'الكل', filterAvailable: 'متاح الآن', filterLocked: 'مقفل', filterDone: 'مكتمل',
+    showCompleted: 'إظهار المكتملة', showLocked: 'إظهار المقفلة',
     expandAll: 'توسيع الكل', collapseAll: 'طي الكل',
     exportBtn: 'تصدير', importBtn: 'استيراد', resetProgress: 'إعادة ضبط التقدم',
     loadingQuests: '...جاري تحميل بيانات المهام من tarkov.dev',
@@ -1369,7 +1376,8 @@ let tasks = [];
 let traderImages = {};
 let completed = new Set(JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'));
 let collapsedTraders = new Set(JSON.parse(localStorage.getItem(COLLAPSE_KEY) || '[]'));
-let hideCompleted = JSON.parse(localStorage.getItem('mohikovHideCompleted') || 'false');
+let showCompleted = JSON.parse(localStorage.getItem('mohikovShowCompleted') || 'false');
+let showLocked = JSON.parse(localStorage.getItem('mohikovShowLocked') || 'true');
 let currentFilter = 'all';
 let toastTimer = null;
 
@@ -1954,7 +1962,8 @@ function render() {
     if (currentFilter === 'available' && status !== 'available') return false;
     if (currentFilter === 'locked' && status !== 'locked') return false;
     if (currentFilter === 'done' && status !== 'completed') return false;
-    if (hideCompleted && currentFilter !== 'done' && status === 'completed') return false;
+    if (!showCompleted && currentFilter !== 'done' && status === 'completed') return false;
+    if (!showLocked && currentFilter !== 'locked' && status === 'locked') return false;
     return true;
   });
 
@@ -2395,11 +2404,18 @@ document.getElementById('filterAll').addEventListener('click', () => setFilter('
 document.getElementById('filterAvailable').addEventListener('click', () => setFilter('available'));
 document.getElementById('filterLocked').addEventListener('click', () => setFilter('locked'));
 document.getElementById('filterDone').addEventListener('click', () => setFilter('done'));
-const hideCompletedCb = document.getElementById('hideCompletedCb');
-hideCompletedCb.checked = hideCompleted;
-hideCompletedCb.addEventListener('change', () => {
-  hideCompleted = hideCompletedCb.checked;
-  localStorage.setItem('mohikovHideCompleted', JSON.stringify(hideCompleted));
+const showCompletedCb = document.getElementById('showCompletedCb');
+showCompletedCb.checked = showCompleted;
+showCompletedCb.addEventListener('change', () => {
+  showCompleted = showCompletedCb.checked;
+  localStorage.setItem('mohikovShowCompleted', JSON.stringify(showCompleted));
+  render();
+});
+const showLockedCb = document.getElementById('showLockedCb');
+showLockedCb.checked = showLocked;
+showLockedCb.addEventListener('change', () => {
+  showLocked = showLockedCb.checked;
+  localStorage.setItem('mohikovShowLocked', JSON.stringify(showLocked));
   render();
 });
 
