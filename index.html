@@ -126,7 +126,7 @@
     gap: 10px;
     align-items: center;
   }
-  .controls input, .controls select, .controls button {
+  .controls input:not([type="checkbox"]), .controls select, .controls button {
     background: var(--bg);
     color: var(--text);
     border: 1px solid var(--border);
@@ -977,8 +977,8 @@
     .top-tabs { flex-wrap: wrap; }
     .top-tabs button { font-size: 12px; padding: 6px 10px; }
     .controls, .ref-controls { gap: 6px; }
-    .controls input, .controls select, .controls button,
-    .ref-controls input, .ref-controls select, .ref-controls button {
+    .controls input:not([type="checkbox"]), .controls select, .controls button,
+    .ref-controls input:not([type="checkbox"]), .ref-controls select, .ref-controls button {
       font-size: 12px;
       padding: 5px 8px;
     }
@@ -1116,7 +1116,7 @@
   </div>
 </div>
 
-<footer><span data-i18n="footerNote">Quest and location data from</span> <a href="https://tarkov.dev" target="_blank">tarkov.dev</a><span data-i18n="footerNote2">. Progress is saved locally in your browser only. Click any quest card for full details.</span><br><span class="footer-credit-en" style="color: var(--accent); font-size: 20px; font-weight: 700;">Made by Mohi, the one and only Tarkov OG.</span><br><span style="color: var(--muted); font-size: 11px;">Ver 0.99500 &middot; <span id="lastUpdatedFooter">Last updated: checking...</span></span></footer>
+<footer><span data-i18n="footerNote">Quest and location data from</span> <a href="https://tarkov.dev" target="_blank">tarkov.dev</a><span data-i18n="footerNote2">. Progress is saved locally in your browser only. Click any quest card for full details.</span><br><span class="footer-credit-en" style="color: var(--accent); font-size: 20px; font-weight: 700;">Made by Mohi, the one and only Tarkov OG.</span><br><span style="color: var(--muted); font-size: 11px;">Ver 0.99501 &middot; <span id="lastUpdatedFooter">Last updated: checking...</span></span></footer>
 <div id="toast"></div>
 
 <div id="modalOverlay">
