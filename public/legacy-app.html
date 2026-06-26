@@ -99,6 +99,7 @@
   /* The map pan/zoom system positions everything via raw pixel transforms in
      JS, not CSS flow direction, so it's intentionally left untouched by RTL. */
   html[dir="rtl"] .map-visual-wrap, html[dir="rtl"] .map-visual-inner { direction: ltr; }
+  html[dir="rtl"] #questViewRight { margin-left: 0; margin-right: auto; }
   header h1 {
     margin: 0 0 4px 0;
     font-size: 28px;
@@ -1121,7 +1122,7 @@
   </div>
 </div>
 
-<footer><span data-i18n="footerNote">Quest and location data from</span> <a href="https://tarkov.dev" target="_blank">tarkov.dev</a><span data-i18n="footerNote2">. Progress is saved locally in your browser only. Click any quest card for full details.</span><br><span class="footer-credit-en" style="color: var(--accent); font-size: 20px; font-weight: 700;">Made by Mohi, the one and only Tarkov OG.</span><br><span style="color: var(--muted); font-size: 11px;">Ver 0.99600 &middot; <span id="lastUpdatedFooter">Last updated: checking...</span></span></footer>
+<footer><span data-i18n="footerNote">Quest and location data from</span> <a href="https://tarkov.dev" target="_blank">tarkov.dev</a><span data-i18n="footerNote2">. Progress is saved locally in your browser only. Click any quest card for full details.</span><br><span class="footer-credit-en" style="color: var(--accent); font-size: 20px; font-weight: 700;">Made by Mohi, the one and only Tarkov OG.</span><br><span style="color: var(--muted); font-size: 11px;">Ver 0.99601 &middot; <span id="lastUpdatedFooter">Last updated: checking...</span></span></footer>
 <div id="toast"></div>
 
 <div id="modalOverlay">
