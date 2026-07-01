@@ -115,13 +115,20 @@ Live within ~1 minute. GitHub Pages serves from master branch root.
 - **Live:** https://mohib86.github.io/baloot/
 - **Repo:** https://github.com/Mohib86/baloot (public — GitHub Pages free tier requires public; move to Cloudflare Pages later if needed)
 - **Firebase project:** `baloot-game-6f7da` (Auth + Firestore)
-- **Current version:** v0.15600 (not yet pushed — see below).
-- **Architecture:** Next.js 14 App Router (`output: 'export'`, `basePath: '/baloot'`). Main game logic in `public/main.js`, styles in `app/globals.css`, shell in `app/page.jsx`.
-- **Local dev:** `npm run dev` in `C:\Users\deent\Baloot\` (Node is on PATH — no prefix needed). Open `http://localhost:3000/baloot`.
+- **Current version:** v0.15604 (pushed).
+- **Architecture:** Next.js 14 App Router (`output: 'export'`, `basePath: '/baloot'`). Main game logic in `public/main.js`, styles in `app/globals.css`, shell in `app/page.jsx`. **Gotcha:** there are TWO copies of `baloot-engine.js` — the actually-served one is `public/baloot-engine.js` (Next serves `public/` at the site root); a root-level `baloot-engine.js` also exists but is a stale build-output duplicate. Always edit `public/baloot-engine.js` for engine changes and check `curl localhost:PORT/baloot/baloot-engine.js` to confirm what's really live.
+- **Local dev:** `npm run dev` in `C:\Users\deent\Baloot\` (Node is on PATH — no prefix needed). Open `http://localhost:3000/baloot`. **Note:** `public/main.js` is loaded via a plain `<script>` tag (not a Next.js module import), so editing it does NOT hot-reload — a full page navigate/reload is required to pick up changes, unlike `app/globals.css` which does hot-reload.
 
-### Done 2026-07-01 (this session pt.3 — matchmaking overlay fix, v0.15599→0.15600)
-- **`showOverlay(html, onMount, variant)`** has two layout modes: default = full-height panel that slides in from the right (used for home/menu screens like Gifts), `'sheet'` = centred bottom-sheet box (used for in-game dialogs). The "جاري البحث عن لاعب..." (searching for player) matchmaking overlay was called with no variant, so on the home screen it rendered as the right-side panel — Mohi wanted it as a contained box instead. Fixed by passing `'sheet'` as the 3rd arg at `public/main.js` (`homeOnlineBtn` click handler, ~line 2706).
-- Not yet pushed.
+### Done 2026-07-01 (this session pt.5 — bot turn speed 5s→2s, v0.15603→0.15604)
+- Bot auto-play delay in `nextPlayer()` (`public/main.js`) cut from 5000ms to 2000ms; the visual countdown ring shown on the bot's avatar (`announceTurn`'s `durMs`) updated to match so it stays in sync.
+
+### Done 2026-07-01 (this session pt.4 — المشاريع سرا counter wrap + round-end polish, v0.15600→0.15603)
+- **Chat panel clipped by bottom HUD:** `#chatPanel`/`#chatPanelBackdrop` were `z-index: 25`/`24`, lower than `#playerInfoBar`/`#actionBar` at `z-index: 40` — the fixed bottom action bar rendered on top of the chat "إغلاق" button, clipping it. Raised chat panel to `z-index: 45`, backdrop to `44`.
+- **6s round-end auto-timer:** the "الجولة التالية" (next round) button now shows a live countdown `(6)→(5)→…` and auto-calls `startHand()` at 0 (tap to skip). Timer cleared defensively in `finishHand()` and `stopGameLoop()`.
+- **Premium round score breakdown:** `buildHandResultHTML` restyled — bordered `.sb-infobox` (اللعبة/المشتري), colored `.sb-resultbanner` (green win / red lose), and the score table now sits in a bordered `.sb-card`. Kept the app's dark+gold theme rather than copying the cream reference Mohi linked.
+- **Match win threshold fixed 152→155 points** — `MATCH_TARGET` in `baloot-engine.js` AND `public/baloot-engine.js` (see engine-copy gotcha above), plus the rules-screen text.
+- **المشاريع سرا counter now wraps:** clicking the سرا (4th) project option incremented forever with no real scoring effect (count was only ever checked as `>0`, never multiplied into points). Now cycles 0→1→2→3→0 to match the realistic max Sira runs in a hand; the other three options (50/100/400) keep single-click toggle behavior.
+- **Commits pushed:** `50a1a29`, `aba1ea3`, `f18475a` → **v0.15604**.
 
 ### Done 2026-07-01 (this session pt.2 — emoji/reaction overhaul, v0.15592→0.15599)
 - **Curved gold bar edges** (top bar + bottom HUD), **version shown under the splash loader**, **mute + dark/light theme buttons** in the top bar (v0.15586→0.15592).
@@ -612,4 +619,4 @@ dotnet run --project C:\Users\deent\EnterpriseRMM\src\Agent\EnterpriseRMM.Agent
 
 ---
 
-*Last updated: 2026-07-01 (Baloot session 8 — matchmaking "searching for player" overlay switched from full-height right side panel to a centred bottom-sheet box (`showOverlay(..., 'sheet')`), v0.15599→v0.15600, not yet pushed; BalootAdmin re-cloned onto this machine + .NET 9 SDK installed user-locally since system only had 8.0.203 and winget had no admin rights here.)*
+*Last updated: 2026-07-01 (Baloot session 8 — matchmaking overlay switched to a bottom-sheet box, chat panel z-index clipping fix, 6s round-end auto-timer, premium round score breakdown, match win threshold fixed 152→155, المشاريع سرا counter now wraps at 3, bot turn speed 5s→2s. All pushed, v0.15599→v0.15604. Also: BalootAdmin re-cloned onto this machine + .NET 9 SDK installed user-locally since system only had 8.0.203 and winget had no admin rights here.)*
