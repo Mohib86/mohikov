@@ -115,9 +115,30 @@ Live within ~1 minute. GitHub Pages serves from master branch root.
 - **Live:** https://mohib86.github.io/baloot/
 - **Repo:** https://github.com/Mohib86/baloot (public — GitHub Pages free tier requires public; move to Cloudflare Pages later if needed)
 - **Firebase project:** `baloot-game-6f7da` (Auth + Firestore)
-- **Current version:** v0.15580 (live, pushed 2026-06-30).
+- **Current version:** v0.15600 (not yet pushed — see below).
 - **Architecture:** Next.js 14 App Router (`output: 'export'`, `basePath: '/baloot'`). Main game logic in `public/main.js`, styles in `app/globals.css`, shell in `app/page.jsx`.
 - **Local dev:** `npm run dev` in `C:\Users\deent\Baloot\` (Node is on PATH — no prefix needed). Open `http://localhost:3000/baloot`.
+
+### Done 2026-07-01 (this session pt.3 — matchmaking overlay fix, v0.15599→0.15600)
+- **`showOverlay(html, onMount, variant)`** has two layout modes: default = full-height panel that slides in from the right (used for home/menu screens like Gifts), `'sheet'` = centred bottom-sheet box (used for in-game dialogs). The "جاري البحث عن لاعب..." (searching for player) matchmaking overlay was called with no variant, so on the home screen it rendered as the right-side panel — Mohi wanted it as a contained box instead. Fixed by passing `'sheet'` as the 3rd arg at `public/main.js` (`homeOnlineBtn` click handler, ~line 2706).
+- Not yet pushed.
+
+### Done 2026-07-01 (this session pt.2 — emoji/reaction overhaul, v0.15592→0.15599)
+- **Curved gold bar edges** (top bar + bottom HUD), **version shown under the splash loader**, **mute + dark/light theme buttons** in the top bar (v0.15586→0.15592).
+- **Emoji picker → 3 tabs:** ستكرات (35 stickers + unicode), تعابير نصيه (15 pastel crown text phrases, cost 10 coins), تعابير متحركة (Mohi's own 8-sticker sheet, sliced from Downloads, green bg flood-fill removed, subtle idle bob). Details in [[reference-baloot-emoji-system]].
+- **Multiplayer reaction FIX:** reactions used to show ONLY on the sender's screen. Now broadcast to the whole table (host relays `lastReaction` on the session doc; guests submit a reaction action). No rules change needed for the broadcast.
+- **Coins:** `spendCoins` + a safe coins self-decrease Firestore rule (a player can only reduce their own balance). **`firestore.rules` must be re-published** for the text-tab spend to persist.
+- **Reactions confined to one bottom-centre zone** — pop in place, no full-screen rise, never off-border (per Mohi's final call).
+- **Commits pushed:** `f8c23e7`, `edef744`, `e74489b`, `4809893` → **v0.15599**.
+
+### Done 2026-07-01 (this session — played-card fixes + premium bar polish)
+- **Pulled latest from GitHub** (v0.15551→v0.15580) at session start, then built on top. Also re-cloned MohiKov (wasn't on this machine) and resynced vault→repos.
+- **`insertBefore` crash fixed** (`_showProjectReveal`): `.seat-name` is now nested in `.seat-plate`, so `container.insertBefore(el, nameEl)` threw NotFoundError. Anchor to the name's real parent instead.
+- **Played-card grey shadow band removed:** `#trickArea::after` (a contact-shadow ellipse) is an `::after` pseudo → painted ON TOP of played cards. Removed it; also lightened the heavy `.trick-card` drop-shadow. NOTE: the table bg is set by JS inline (`setRandomTableBg` in main.js), NOT CSS — see [[project-baloot-played-card-visuals]].
+- **Premium curved gold bar edges:** top bar (`.topbar`) + bottom HUD (`#playerInfoBar`) now have a SINGLE curved gold line on their inner edge (rounded corners, warm `#D4AF37`, soft glow) — not a full ring (Mohi didn't want gold wrapping all sides).
+- **Version shown under the splash loading bar** (`.splash-ver`, reads `APP_VERSION`).
+- **Two new in-game top-bar buttons** (`.topbar-icon-btn`, match share/emoji): **mute** (beside القائمة menu; gates team trick sounds via `window.__baloot_muted`, persisted) + **dark/light theme toggle** (reuses `applyTheme`). Top-bar layout in [[reference-baloot-topbar-layout]].
+- **Commits pushed:** `f8c23e7`, `edef744`, `e74489b` → **v0.15592**.
 
 ### Done 2026-06-30 (this session — security + premium table UI)
 - **Security — Firestore rules now PUBLISHED.** Anti-cheat freeze on `players/{uid}` self-writes so a client can't set its own `cardPoints`/popularity from the browser console. Uses `affectedKeys().hasAny([...])` — an earlier `field == resource.data.field` version *errored* on a field older accounts were missing and was denying the sign-in profile backfill; `cardPoints` has a one-time absent→1000 exception. Also: removed the dead `awardGiftReputation` store-gift write, fixed gift-modal **XSS** (escapeHtml on all cross-user names), `reportError` no longer leaks stack traces to players, `recordMatchResult` recentMatches now atomic (transaction). `firestore-rules.txt` is the paste-safe copy; deploy via `firebase deploy --only firestore:rules`.
@@ -410,9 +431,17 @@ NPM proxy: forward to `172.18.0.1:8080` (NOT `127.0.0.1` — that's the NPM cont
 - **Status:** Modules 1–5 complete, running locally, pushed to GitHub 2026-06-28
 - **Purpose:** Admin dashboard for the Baloot Firebase game — live game monitoring, player management, audit log, admin accounts
 
+### Environment note (2026-07-01)
+Local folder was missing on this machine (never cloned here, or removed) — re-cloned via `gh repo clone Mohib86/BalootAdmin`. This machine's system-wide `dotnet` is SDK **8.0.203 only**, but the backend targets **.NET 9**, and `winget` has no admin rights here to install the SDK globally. Fix: installed .NET 9 SDK **user-locally** (no admin needed) via Microsoft's official script:
+```powershell
+Invoke-WebRequest -Uri "https://dot.net/v1/dotnet-install.ps1" -OutFile "$env:TEMP\dotnet-install.ps1"
+& "$env:TEMP\dotnet-install.ps1" -Channel 9.0 -InstallDir "$env:LOCALAPPDATA\Microsoft\dotnet"
+```
+This does NOT change what plain `dotnet --version` resolves to (still 8.0.203) — must prepend the 9.0 install dir to PATH (and set `DOTNET_ROOT`) whenever running the backend, e.g. in bash: `export PATH="/c/Users/deent/AppData/Local/Microsoft/dotnet:$PATH"; export DOTNET_ROOT="/c/Users/deent/AppData/Local/Microsoft/dotnet"`.
+
 ### Running it
 ```powershell
-# Backend (from C:\Users\deent\BalootAdmin\backend)
+# Backend (from C:\Users\deent\BalootAdmin\backend) — prepend the .NET 9 dir to PATH first (see above)
 dotnet run --project src/BalootAdmin.API
 
 # Frontend (from C:\Users\deent\BalootAdmin\frontend)
@@ -583,4 +612,4 @@ dotnet run --project C:\Users\deent\EnterpriseRMM\src\Agent\EnterpriseRMM.Agent
 
 ---
 
-*Last updated: 2026-06-30 (Baloot session 7 — Firestore anti-cheat rules PUBLISHED (affectedKeys freeze of cardPoints/popularity) + XSS/reportError/recentMatches fixes; premium opponent seat panels with card-back fan = live count, dealer marker, name wraps full; team trick sounds (us/them) on card drop; turn direction swapped to play-to-the-right; desktop hover-to-raise hand; سوا guest crash fix; gift Cloud Functions written (not deployed). Live v0.15580.)*
+*Last updated: 2026-07-01 (Baloot session 8 — matchmaking "searching for player" overlay switched from full-height right side panel to a centred bottom-sheet box (`showOverlay(..., 'sheet')`), v0.15599→v0.15600, not yet pushed; BalootAdmin re-cloned onto this machine + .NET 9 SDK installed user-locally since system only had 8.0.203 and winget had no admin rights here.)*
